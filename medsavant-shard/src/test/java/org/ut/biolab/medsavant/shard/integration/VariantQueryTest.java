@@ -87,12 +87,12 @@ public class VariantQueryTest extends AbstractShardTest {
     @Test
     public void testCountVariantsWithRestriction() {
         Session s = ShardedSessionManager.openSession();
-        
+
         Criteria c = s.createCriteria(VariantEntityGenerator.getInstance().getCompiled()).setProjection(
                 Projections.count(VariantMappingGenerator.getInstance().getId().getColumn()));
         c.add(Restrictions.lt(VariantMappingGenerator.getInstance().getId().getColumn(), 100000000));
         Integer res = ((BigDecimal) c.list().get(0)).intValue();
-        
+
         ShardedSessionManager.closeSession(s);
         System.out.println("Count: " + res);
     }
@@ -153,7 +153,6 @@ public class VariantQueryTest extends AbstractShardTest {
 
         Criteria c = ((ShardedCriteriaImpl) session.createCriteria(VariantEntityGenerator.getInstance().getCompiled())).setFetchSize(10).setMaxResults(10)
                 .setProjection(Projections.sqlGroupProjection("dna_id as value", "value", new String[] { "value" }, new Type[] { new StringType() }));
-        // .setProjection(Projections.distinct(Projections.property("dna_id")));
 
         List<Object[]> os = c.list();
         for (Object[] o : os) {
@@ -286,7 +285,7 @@ public class VariantQueryTest extends AbstractShardTest {
         ShardedSessionManager.closeSession(session);
 
         // modify class and try again
-        e.addField(new ClassField("private", "String", "aa", "\"\""));
+        e.addField(new ClassField("private", "String", "aaa", "\"\""));
         e.compile();
         ShardedSessionManager.setClassInMapping();
         ShardedSessionManager.buildConfig();

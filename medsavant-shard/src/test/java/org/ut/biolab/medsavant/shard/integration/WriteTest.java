@@ -172,7 +172,6 @@ public class WriteTest extends AbstractShardTest {
         // merge files
         for (int i = 0; i < shardNo; i++) {
             FileUtils.mergeFiles(fileBase, fileBase + new Integer(i));
-            // FileUtils.deleteFile(fileBase + new Integer(i));
         }
 
         // read the file

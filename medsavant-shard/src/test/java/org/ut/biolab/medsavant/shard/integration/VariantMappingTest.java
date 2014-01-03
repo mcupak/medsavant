@@ -95,13 +95,10 @@ public class VariantMappingTest extends AbstractShardTest {
 
     @Test
     public void testCompilation() {
-        // Prepare source somehow.
         String source = "package org.ut.biolab.medsavant.shard.variant; public class Test { static { System.out.println(\"hello\"); } public Test() { System.out.println(\"world\"); } }";
 
         try {
-            // Save source in .java file.
-            File root = new File("/tmp"); // On Windows running on C:\, this is
-                                          // C:\java.
+            File root = new File("/tmp");
             File sourceFile = new File(root, "org/ut/biolab/medsavant/shard/variant/Test.java");
             sourceFile.getParentFile().mkdirs();
 
@@ -113,21 +110,16 @@ public class VariantMappingTest extends AbstractShardTest {
 
             // Load and instantiate compiled class.
             URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] { root.toURI().toURL() });
-            Class<?> cls = Class.forName("org.ut.biolab.medsavant.shard.variant.Test", true, classLoader); // Should
-            // print "hello".
-            Object instance = cls.newInstance(); // Should print "world".
-            System.out.println(instance); // Should print "test.Test@hashcode".
+            Class<?> cls = Class.forName("org.ut.biolab.medsavant.shard.variant.Test", true, classLoader);
+            Object instance = cls.newInstance();
+            System.out.println(instance);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (InstantiationException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
