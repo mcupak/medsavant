@@ -128,7 +128,7 @@ public class ShardedCriteriaImpl implements ShardedCriteria {
      * Sets multiple projections in the same query.
      * 
      * @param projections
-     * @return
+     * @return criteria instance
      */
     public Criteria setProjections(Set<Projection> projections) {
         this.propertyProjectionIsLast = false;
@@ -149,8 +149,10 @@ public class ShardedCriteriaImpl implements ShardedCriteria {
      * Sets projections for aggregate functions with group by.
      * 
      * @param ap
+     *            aggregate projection to use
      * @param pp
-     * @return
+     *            property projection to use
+     * @return criteria instance
      */
     public Criteria setAggregateGroupByProjection(AggregateProjection ap, PropertyProjection pp) {
         criteriaCollector.addProjection(ap);

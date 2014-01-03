@@ -194,7 +194,7 @@ public class ShardedSessionManager {
     /**
      * Retrieves the table currently used in the mapping.
      * 
-     * @return
+     * @return table name
      */
     public static String getTable() {
         return VariantMappingGenerator.getInstance().getTable();

@@ -301,10 +301,6 @@ public class ShardedVariantManagerHelper implements Serializable {
      *            name of the first column
      * @param columnnameY
      *            name of the second column
-     * @param cx
-     *            nucleotide condition for the first column
-     * @param cy
-     *            nucleotide condition for the second column
      * @param columnXCategorical
      *            true if the first column is nonnumerical, false otherwise
      * @param columnYCategorical

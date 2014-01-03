@@ -57,6 +57,7 @@ public class ShardedDatabaseSetupHelper {
      * Creates variant tables on shards.
      * 
      * @param query
+     *            query string
      */
     public void createVariantTables(String query) {
         Session session = ShardedSessionManager.openSession();
@@ -69,8 +70,8 @@ public class ShardedDatabaseSetupHelper {
     /**
      * Removes variant tables from shards.
      * 
-     * @param query
-     *            drop table query
+     * @param tableName
+     *            name of the variants table
      */
     public void dropVariantTables(String tableName) {
         final String query = "DROP TABLE IF EXISTS " + tableName;

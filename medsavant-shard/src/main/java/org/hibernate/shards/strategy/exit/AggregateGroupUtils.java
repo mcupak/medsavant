@@ -41,8 +41,8 @@ public class AggregateGroupUtils {
      * 
      * @param results
      *            results to collide
-     * @param ag
-     *            aggregation function
+     * @param ags
+     *            aggregation functions
      * @param keyIndices
      *            indices of columns in group by
      * @return overall result across all shards
@@ -175,7 +175,7 @@ public class AggregateGroupUtils {
     /**
      * Uses grouping to compute correct distinct count.
      * 
-     * @param results
+     * @param result
      *            list of results from all shards
      * @return collapsed (grouped) list of results
      */

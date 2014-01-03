@@ -50,7 +50,7 @@ public class ShardQueryExecutor implements Callable<Object> {
     /**
      * Obtains a connection to the database and executes a query.
      * 
-     * @return
+     * @return query result if available, shard id otherwise
      * 
      */
     public Object call() {

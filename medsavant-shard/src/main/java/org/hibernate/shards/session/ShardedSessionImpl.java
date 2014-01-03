@@ -90,13 +90,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Concrete implementation of a ShardedSession, and also the central component of
- * Hibernate Shards' internal implementation. This class exposes two interfaces;
- * ShardedSession itself, to the application, and ShardedSessionImplementor, to
- * other components of Hibernate Shards. This class is not threadsafe.
- *
- * @author maxr@google.com (Max Ross)
- *         Tomislav Nad
+ * Concrete implementation of a ShardedSession, and also the central component
+ * of Hibernate Shards' internal implementation. This class exposes two
+ * interfaces; ShardedSession itself, to the application, and
+ * ShardedSessionImplementor, to other components of Hibernate Shards. This
+ * class is not threadsafe.
+ * 
+ * @author maxr@google.com (Max Ross) Tomislav Nad
  */
 public class ShardedSessionImpl implements ShardedSession, ShardedSessionImplementor, ShardIdResolver {
 
@@ -131,45 +131,43 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     /**
      * Constructor used for openSession(...) processing.
-     *
-     * @param shardedSessionFactory The factory from which this session was obtained
-     * @param shardStrategy         The shard strategy for this session
+     * 
+     * @param shardedSessionFactory
+     *            The factory from which this session was obtained
+     * @param shardStrategy
+     *            The shard strategy for this session
      * @param classesWithoutTopLevelSaveSupport
-     *                              The set of classes on which top-level save can not be performed
+     *            The set of classes on which top-level save can not be
+     *            performed
      * @param checkAllAssociatedObjectsForDifferentShards
-     *                              Should we check for cross-shard relationships
+     *            Should we check for cross-shard relationships
      */
-    ShardedSessionImpl(final ShardedSessionFactoryImplementor shardedSessionFactory,
-                       final ShardStrategy shardStrategy,
-                       final Set<Class<?>> classesWithoutTopLevelSaveSupport,
-                       final boolean checkAllAssociatedObjectsForDifferentShards) {
+    ShardedSessionImpl(final ShardedSessionFactoryImplementor shardedSessionFactory, final ShardStrategy shardStrategy, final Set<Class<?>> classesWithoutTopLevelSaveSupport,
+            final boolean checkAllAssociatedObjectsForDifferentShards) {
 
-        this(null, shardedSessionFactory, shardStrategy, classesWithoutTopLevelSaveSupport,
-                checkAllAssociatedObjectsForDifferentShards);
+        this(null, shardedSessionFactory, shardStrategy, classesWithoutTopLevelSaveSupport, checkAllAssociatedObjectsForDifferentShards);
     }
 
     /**
      * Constructor used for openSession(...) processing.
-     *
-     * @param interceptor           The interceptor to be applied to this session
-     * @param shardedSessionFactory The factory from which this session was obtained
-     * @param shardStrategy         The shard strategy for this session
+     * 
+     * @param interceptor
+     *            The interceptor to be applied to this session
+     * @param shardedSessionFactory
+     *            The factory from which this session was obtained
+     * @param shardStrategy
+     *            The shard strategy for this session
      * @param classesWithoutTopLevelSaveSupport
-     *                              The set of classes on which top-level save can not be performed
+     *            The set of classes on which top-level save can not be
+     *            performed
      * @param checkAllAssociatedObjectsForDifferentShards
-     *                              Should we check for cross-shard relationships
+     *            Should we check for cross-shard relationships
      */
-    ShardedSessionImpl(final /*@Nullable*/ Interceptor interceptor,
-                       final ShardedSessionFactoryImplementor shardedSessionFactory,
-                       final ShardStrategy shardStrategy,
-                       final Set<Class<?>> classesWithoutTopLevelSaveSupport,
-                       final boolean checkAllAssociatedObjectsForDifferentShards) {
+    ShardedSessionImpl(final/* @Nullable */Interceptor interceptor, final ShardedSessionFactoryImplementor shardedSessionFactory, final ShardStrategy shardStrategy,
+            final Set<Class<?>> classesWithoutTopLevelSaveSupport, final boolean checkAllAssociatedObjectsForDifferentShards) {
 
         this.shardedSessionFactory = shardedSessionFactory;
-        this.shards = buildShardListFromSessionFactoryShardIdMap(
-                shardedSessionFactory.getSessionFactoryShardIdMap(),
-                checkAllAssociatedObjectsForDifferentShards,
-                this,
+        this.shards = buildShardListFromSessionFactoryShardIdMap(shardedSessionFactory.getSessionFactoryShardIdMap(), checkAllAssociatedObjectsForDifferentShards, this,
                 interceptor);
 
         this.shardIdsToShards = buildShardIdsToShardsMap();
@@ -188,18 +186,15 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
         return map;
     }
 
-    static List<Shard> buildShardListFromSessionFactoryShardIdMap(
-            final Map<SessionFactoryImplementor, Set<ShardId>> sessionFactoryShardIdMap,
-            final boolean checkAllAssociatedObjectsForDifferentShards,
-            final ShardIdResolver shardIdResolver,
-            final /*@Nullable*/ Interceptor interceptor) {
+    static List<Shard> buildShardListFromSessionFactoryShardIdMap(final Map<SessionFactoryImplementor, Set<ShardId>> sessionFactoryShardIdMap,
+            final boolean checkAllAssociatedObjectsForDifferentShards, final ShardIdResolver shardIdResolver, final/*
+                                                                                                                    * @
+                                                                                                                    * Nullable
+                                                                                                                    */Interceptor interceptor) {
 
         final List<Shard> shardList = Lists.newArrayList();
         for (final Map.Entry<SessionFactoryImplementor, Set<ShardId>> entry : sessionFactoryShardIdMap.entrySet()) {
-            final Pair<InterceptorList, SetSessionOnRequiresSessionEvent> pair = buildInterceptorList(
-                    interceptor,
-                    shardIdResolver,
-                    checkAllAssociatedObjectsForDifferentShards);
+            final Pair<InterceptorList, SetSessionOnRequiresSessionEvent> pair = buildInterceptorList(interceptor, shardIdResolver, checkAllAssociatedObjectsForDifferentShards);
             final Shard shard = new ShardImpl(entry.getValue(), entry.getKey(), pair.first);
             shardList.add(shard);
             if (pair.second != null) {
@@ -212,25 +207,24 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     /**
      * Construct an {@link InterceptorList} with all the interceptors we'll want
      * to register when we create a {@link ShardedSessionImpl}.
-     *
-     * @param providedInterceptor the {@link Interceptor} passed in by the client
-     * @param shardIdResolver     knows how to resolve a {@link ShardId} from an object
+     * 
+     * @param providedInterceptor
+     *            the {@link Interceptor} passed in by the client
+     * @param shardIdResolver
+     *            knows how to resolve a {@link ShardId} from an object
      * @param checkAllAssociatedObjectsForDifferentShards
-     *                            true if cross-shard
-     *                            relationship detection is enabled
-     * @return
+     *            true if cross-shard relationship detection is enabled
+     * @return list of interceptors
      */
-    static Pair<InterceptorList, SetSessionOnRequiresSessionEvent> buildInterceptorList(
-            Interceptor providedInterceptor,
-            final ShardIdResolver shardIdResolver,
+    static Pair<InterceptorList, SetSessionOnRequiresSessionEvent> buildInterceptorList(Interceptor providedInterceptor, final ShardIdResolver shardIdResolver,
             final boolean checkAllAssociatedObjectsForDifferentShards) {
 
         // everybody gets a ShardAware interceptor
-        final List<Interceptor> interceptorList = Lists.<Interceptor>newArrayList(new ShardAwareInterceptor(shardIdResolver));
+        final List<Interceptor> interceptorList = Lists.<Interceptor> newArrayList(new ShardAwareInterceptor(shardIdResolver));
         if (checkAllAssociatedObjectsForDifferentShards) {
-            // cross shard association checks during updates are handled using interceptors
-            final CrossShardRelationshipDetectingInterceptor csrdi =
-                    new CrossShardRelationshipDetectingInterceptor(shardIdResolver);
+            // cross shard association checks during updates are handled using
+            // interceptors
+            final CrossShardRelationshipDetectingInterceptor csrdi = new CrossShardRelationshipDetectingInterceptor(shardIdResolver);
             interceptorList.add(csrdi);
         }
 
@@ -252,10 +246,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     private Object applyGetOperation(final ShardOperation<Object> shardOp, final ShardResolutionStrategyData srsd) {
         final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(srsd);
-        return shardStrategy.getShardAccessStrategy().apply(
-                shardIdListToShardList(shardIds),
-                shardOp,
-                new FirstNonNullResultExitStrategy<Object>(),
+        return shardStrategy.getShardAccessStrategy().apply(shardIdListToShardList(shardIds), shardOp, new FirstNonNullResultExitStrategy<Object>(),
                 new ExitOperationsQueryCollector());
     }
 
@@ -333,15 +324,13 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     @Deprecated
     @Override
-    public Object get(final String entityName, final Serializable id, final LockMode lockMode)
-            throws HibernateException {
+    public Object get(final String entityName, final Serializable id, final LockMode lockMode) throws HibernateException {
 
         return get(entityName, id, new LockOptions(lockMode));
     }
 
     @Override
-    public Object get(final String entityName, final Serializable id, final LockOptions lockOptions)
-            throws HibernateException {
+    public Object get(final String entityName, final Serializable id, final LockOptions lockOptions) throws HibernateException {
 
         final ShardOperation<Object> shardOp = new ShardOperation<Object>() {
 
@@ -380,7 +369,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     }
 
     /**
-     * Unsupported.  This is a scope decision, not a technical decision.
+     * Unsupported. This is a scope decision, not a technical decision.
      */
     @Override
     public Session getSession(final EntityMode entityMode) {
@@ -537,7 +526,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
                 try {
                     return shard.getSession().getIdentifier(object);
                 } catch (TransientObjectException e) {
-                    // Object is transient or is not associated with this session.
+                    // Object is transient or is not associated with this
+                    // session.
                 }
             }
         }
@@ -576,8 +566,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     @Override
     public Object load(final Class theClass, final Serializable id, final LockOptions lockOptions) throws HibernateException {
 
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(theClass, id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(theClass, id));
 
         if (shardIds.size() == 1) {
             return shardIdsToShards.get(shardIds.get(0)).establishSession().load(theClass, id, lockOptions);
@@ -592,18 +581,15 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     @Deprecated
     @Override
-    public Object load(final String entityName, final Serializable id, final LockMode lockMode)
-            throws HibernateException {
+    public Object load(final String entityName, final Serializable id, final LockMode lockMode) throws HibernateException {
 
         return load(entityName, id, new LockOptions(lockMode));
     }
 
     @Override
-    public Object load(final String entityName, final Serializable id, final LockOptions lockOptions)
-            throws HibernateException {
+    public Object load(final String entityName, final Serializable id, final LockOptions lockOptions) throws HibernateException {
 
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(entityName, id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(entityName, id));
 
         if (shardIds.size() == 1) {
             return shardIdsToShards.get(shardIds.get(0)).establishSession().load(entityName, id, lockOptions);
@@ -619,8 +605,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     @Override
     public Object load(final Class clazz, final Serializable id) throws HibernateException {
 
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(clazz, id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(clazz, id));
 
         if (shardIds.size() == 1) {
             return shardIdsToShards.get(shardIds.get(0)).establishSession().load(clazz, id);
@@ -636,8 +621,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     @Override
     public Object load(final String entityName, final Serializable id) throws HibernateException {
 
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(entityName, id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(entityName, id));
 
         if (shardIds.size() == 1) {
             return shardIdsToShards.get(shardIds.get(0)).establishSession().load(entityName, id);
@@ -653,8 +637,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     @Override
     public void load(final Object object, final Serializable id) throws HibernateException {
 
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(object.getClass(), id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(object.getClass(), id));
 
         if (shardIds.size() == 1) {
             shardIdsToShards.get(shardIds.get(0)).establishSession().load(object, id);
@@ -676,12 +659,10 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     }
 
     @Override
-    public void replicate(final String entityName, final Object object, final ReplicationMode replicationMode)
-            throws HibernateException {
+    public void replicate(final String entityName, final Object object, final ReplicationMode replicationMode) throws HibernateException {
 
         final Serializable id = extractId(object);
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(
-                new ShardResolutionStrategyDataImpl(object.getClass(), id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(object.getClass(), id));
 
         if (shardIds.size() == 1) {
             setCurrentSubgraphShardId(shardIds.get(0));
@@ -692,7 +673,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
                 result = get(object.getClass(), id);
             }
 
-            if (result == null) {  // non-persisted object
+            if (result == null) { // non-persisted object
                 final ShardId shardId = selectShardIdForNewObject(object);
                 setCurrentSubgraphShardId(shardId);
                 shardIdsToShards.get(shardId).establishSession().replicate(entityName, object, replicationMode);
@@ -722,22 +703,23 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             return lockedShardId;
         }
         ShardId shardId;
-    /*
-     * Someone is trying to save this object, and that's wonderful, but if
-     * this object references or is referenced by any other objects that have already been
-     * associated with a session it's important that this object end up
-     * associated with the same session.  In order to make sure that happens,
-     * we're going to look at the metadata for this object and see what
-     * references we have, and then use those to determine the proper shard.
-     * If we can't find any references we'll leave it up to the shard selection
-     * strategy.
-     */
+        /*
+         * Someone is trying to save this object, and that's wonderful, but if
+         * this object references or is referenced by any other objects that
+         * have already been associated with a session it's important that this
+         * object end up associated with the same session. In order to make sure
+         * that happens, we're going to look at the metadata for this object and
+         * see what references we have, and then use those to determine the
+         * proper shard. If we can't find any references we'll leave it up to
+         * the shard selection strategy.
+         */
         shardId = getShardIdOfRelatedObject(obj);
         if (shardId == null) {
             checkForUnsupportedTopLevelSave(obj.getClass());
             shardId = shardStrategy.getShardSelectionStrategy().selectShardIdForNewObject(obj);
         }
-        // lock has been requested but shard has not yet been selected - lock it in
+        // lock has been requested but shard has not yet been selected - lock it
+        // in
         if (lockedShard) {
             lockedShardId = shardId;
         }
@@ -748,23 +730,21 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     /*
      * We already know that we don't have a shardId locked in for this session,
      * and we already know that this object can't grab its session from some
-     * other object (we looked).  If this class is in the set of classes
-     * that don't support top-level saves, it's an error.
-     * This is to prevent clients from accidentally splitting their object graphs
-     * across multiple shards.
+     * other object (we looked). If this class is in the set of classes that
+     * don't support top-level saves, it's an error. This is to prevent clients
+     * from accidentally splitting their object graphs across multiple shards.
      */
     private void checkForUnsupportedTopLevelSave(final Class<?> clazz) {
         if (classesWithoutTopLevelSaveSupport.contains(clazz)) {
-            final String msg = String.format("Attempt to save object of type %s as a top-level object.",
-                    clazz.getName());
+            final String msg = String.format("Attempt to save object of type %s as a top-level object.", clazz.getName());
             log.error(msg);
             throw new HibernateException(msg);
         }
     }
 
     /**
-     * TODO(maxr) I can see this method benefitting from a cache that lets us quickly
-     * see which properties we might need to look at.
+     * TODO(maxr) I can see this method benefitting from a cache that lets us
+     * quickly see which properties we might need to look at.
      */
     ShardId getShardIdOfRelatedObject(final Object obj) {
         final ClassMetadata cmd = getClassMetadata(obj.getClass());
@@ -776,10 +756,10 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
         for (final Pair<Type, Object> pair : CrossShardRelationshipDetectingInterceptor.buildListOfAssociations(types, values)) {
             if (pair.getFirst().isCollectionType()) {
                 /**
-                 * collection types are more expensive to evaluate (might involve
-                 * lazy-loading the contents of the collection from the db), so
-                 * let's hold off until the end on the chance that we can fail
-                 * quickly.
+                 * collection types are more expensive to evaluate (might
+                 * involve lazy-loading the contents of the collection from the
+                 * db), so let's hold off until the end on the chance that we
+                 * can fail quickly.
                  */
                 if (collections == null) {
                     collections = Lists.newArrayList();
@@ -790,8 +770,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             } else {
                 shardId = checkForConflictingShardId(shardId, obj.getClass(), pair.getSecond());
                 /**
-                 * if we're not checking for different shards, return as soon as we've
-                 * got one
+                 * if we're not checking for different shards, return as soon as
+                 * we've got one
                  */
                 if (shardId != null && !checkAllAssociatedObjectsForDifferentShards) {
                     return shardId;
@@ -803,8 +783,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
                 shardId = checkForConflictingShardId(shardId, obj.getClass(), collEntry);
                 if (shardId != null && !checkAllAssociatedObjectsForDifferentShards) {
                     /**
-                     * if we're not checking for different shards, return as soon as we've
-                     * got one
+                     * if we're not checking for different shards, return as
+                     * soon as we've got one
                      */
                     return shardId;
                 }
@@ -813,20 +793,15 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
         return shardId;
     }
 
-    ShardId checkForConflictingShardId(ShardId existingShardId,
-                                       final Class<?> newObjectClass, final Object associatedObject) {
+    ShardId checkForConflictingShardId(ShardId existingShardId, final Class<?> newObjectClass, final Object associatedObject) {
 
         final ShardId localShardId = getShardIdForObject(associatedObject);
         if (localShardId != null) {
             if (existingShardId == null) {
                 existingShardId = localShardId;
             } else if (!localShardId.equals(existingShardId)) {
-                final String msg = String.format(
-                        "Object of type %s is on shard %d but an associated object of type %s is on shard %d.",
-                        newObjectClass.getName(),
-                        existingShardId.getId(),
-                        associatedObject.getClass().getName(),
-                        localShardId.getId());
+                final String msg = String.format("Object of type %s is on shard %d but an associated object of type %s is on shard %d.", newObjectClass.getName(),
+                        existingShardId.getId(), associatedObject.getClass().getName(), localShardId.getId());
                 log.error(msg);
                 throw new CrossShardAssociationException(msg);
             }
@@ -883,9 +858,9 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
         }
 
         /**
-         * Too bad, we've got a detached object that could be on more than 1 shard.
-         * The only safe way to handle this is to try and lookup the object, and if
-         * it exists, do a merge, and if it doesn't, do a save.
+         * Too bad, we've got a detached object that could be on more than 1
+         * shard. The only safe way to handle this is to try and lookup the
+         * object, and if it exists, do a merge, and if it doesn't, do a save.
          */
         final Serializable id = extractId(object);
         if (id != null) {
@@ -938,9 +913,9 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
         }
 
         /**
-         * Too bad, we've got a detached object that could be on more than 1 shard.
-         * The only safe way to perform the update is to load the object and then
-         * do a merge.
+         * Too bad, we've got a detached object that could be on more than 1
+         * shard. The only safe way to perform the update is to load the object
+         * and then do a merge.
          */
         final Serializable id = extractId(object);
         if (id != null) {
@@ -952,10 +927,10 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
         if (shardId == null) {
             /**
-             * This is an error condition.  In order to provide the same behavior
+             * This is an error condition. In order to provide the same behavior
              * as a non-sharded session we're just going to dispatch the update
-             * to a random shard (we know it will fail because either we don't have
-             * an id or the lookup returned).
+             * to a random shard (we know it will fail because either we don't
+             * have an id or the lookup returned).
              */
             op.update(getShards().get(0), object);
             // this call may succeed but the commit will fail
@@ -1004,8 +979,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     @Override
     public Object merge(final String entityName, final Object object) throws HibernateException {
         final Serializable id = extractId(object);
-        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new
-                ShardResolutionStrategyDataImpl(object.getClass(), id));
+        final List<ShardId> shardIds = selectShardIdsFromShardResolutionStrategyData(new ShardResolutionStrategyDataImpl(object.getClass(), id));
 
         if (shardIds.size() == 1) {
             setCurrentSubgraphShardId(shardIds.get(0));
@@ -1015,7 +989,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             if (id != null) {
                 result = get(object.getClass(), id);
             }
-            if (result == null) {  // non-persisted object
+            if (result == null) { // non-persisted object
                 final ShardId shardId = selectShardIdForNewObject(object);
                 setCurrentSubgraphShardId(shardId);
                 return shardIdsToShards.get(shardId).establishSession().merge(entityName, object);
@@ -1053,14 +1027,14 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             return;
         }
         /**
-         * Detached object.
-         * We can't just try to delete on each shard because if you have an
-         * object associated with Session x and you try to delete that object in
-         * Session y, and if that object has persistent collections, Hibernate will
-         * blow up because it will try to associate the persistent collection with
-         * a different Session as part of the cascade.  In order to avoid this we
-         * need to be precise about the shard on which we perform the delete.
-         *
+         * Detached object. We can't just try to delete on each shard because if
+         * you have an object associated with Session x and you try to delete
+         * that object in Session y, and if that object has persistent
+         * collections, Hibernate will blow up because it will try to associate
+         * the persistent collection with a different Session as part of the
+         * cascade. In order to avoid this we need to be precise about the shard
+         * on which we perform the delete.
+         * 
          * First let's see if we can derive the shard just from the object's id.
          */
         final List<Shard> potentialShards = determineShardsObjectViaResolutionStrategy(object);
@@ -1069,9 +1043,9 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             return;
         }
         /**
-         * Too bad, we've got a detached object that could be on more than 1 shard.
-         * The only safe way to perform the delete is to load the object before
-         * deleting.
+         * Too bad, we've got a detached object that could be on more than 1
+         * shard. The only safe way to perform the delete is to load the object
+         * before deleting.
          */
         final Object persistent = get(object.getClass(), extractId(object));
         shardId = getShardIdForObject(persistent);
@@ -1206,70 +1180,50 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     @Override
     public Criteria createCriteria(final Class persistentClass) {
-        return new ShardedCriteriaImpl(
-                new CriteriaId(nextCriteriaId++),
-                shards,
-                new CriteriaFactoryImpl(persistentClass),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedCriteriaImpl(new CriteriaId(nextCriteriaId++), shards, new CriteriaFactoryImpl(persistentClass), shardStrategy.getShardAccessStrategy());
     }
 
     @Override
     public Criteria createCriteria(final Class persistentClass, final String alias) {
-        return new ShardedCriteriaImpl(
-                new CriteriaId(nextCriteriaId++),
-                shards,
-                new CriteriaFactoryImpl(persistentClass, alias),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedCriteriaImpl(new CriteriaId(nextCriteriaId++), shards, new CriteriaFactoryImpl(persistentClass, alias), shardStrategy.getShardAccessStrategy());
     }
 
     @Override
     public Criteria createCriteria(final String entityName) {
-        return new ShardedCriteriaImpl(
-                new CriteriaId(nextCriteriaId++),
-                shards,
-                new CriteriaFactoryImpl(entityName),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedCriteriaImpl(new CriteriaId(nextCriteriaId++), shards, new CriteriaFactoryImpl(entityName), shardStrategy.getShardAccessStrategy());
     }
 
     public Criteria createCriteria(final String entityName, final String alias) {
-        return new ShardedCriteriaImpl(
-                new CriteriaId(nextCriteriaId++),
-                shards,
-                new CriteriaFactoryImpl(entityName, alias),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedCriteriaImpl(new CriteriaId(nextCriteriaId++), shards, new CriteriaFactoryImpl(entityName, alias), shardStrategy.getShardAccessStrategy());
     }
 
     @Override
     public Query createQuery(String queryString) throws HibernateException {
-        return new ShardedQueryImpl(new QueryId(nextQueryId++),
-                shards,
-                new AdHocQueryFactoryImpl(queryString),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedQueryImpl(new QueryId(nextQueryId++), shards, new AdHocQueryFactoryImpl(queryString), shardStrategy.getShardAccessStrategy());
     }
 
     @Override
     public SQLQuery createSQLQuery(final String queryString) throws HibernateException {
-        return new ShardedSQLQueryImpl(new QueryId(nextQueryId++),
-                shards,
-                new AdHocQueryFactoryImpl(queryString),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedSQLQueryImpl(new QueryId(nextQueryId++), shards, new AdHocQueryFactoryImpl(queryString), shardStrategy.getShardAccessStrategy());
     }
 
     /**
-     * The {@link org.hibernate.impl.SessionImpl#createFilter(Object, String)} implementation
-     * requires that the collection that is passed in is a persistent collection.
-     * Since we don't support cross-shard relationships, if we receive a persistent
-     * collection that collection is guaranteed to be associated with a single
-     * shard.  If we can figure out which shard the collection is associated with
-     * we can just delegate this operation to that shard.
+     * The {@link org.hibernate.impl.SessionImpl#createFilter(Object, String)}
+     * implementation requires that the collection that is passed in is a
+     * persistent collection. Since we don't support cross-shard relationships,
+     * if we receive a persistent collection that collection is guaranteed to be
+     * associated with a single shard. If we can figure out which shard the
+     * collection is associated with we can just delegate this operation to that
+     * shard.
      */
     @Override
     public Query createFilter(final Object collection, final String queryString) throws HibernateException {
         final Shard shard = getShardForCollection(collection, shards);
         Session session;
         if (shard == null) {
-            // collection not associated with any of our shards, so just delegate to
-            // a random shard.  We'll end up failing, but we'll fail with the
+            // collection not associated with any of our shards, so just
+            // delegate to
+            // a random shard. We'll end up failing, but we'll fail with the
             // error that users typically get.
             session = getSomeSession();
             if (session == null) {
@@ -1283,10 +1237,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     @Override
     public Query getNamedQuery(final String queryName) throws HibernateException {
-        return new ShardedQueryImpl(new QueryId(nextQueryId++),
-                shards,
-                new NamedQueryFactoryImpl(queryName),
-                shardStrategy.getShardAccessStrategy());
+        return new ShardedQueryImpl(new QueryId(nextQueryId++), shards, new NamedQueryFactoryImpl(queryName), shardStrategy.getShardAccessStrategy());
     }
 
     @Override
@@ -1321,7 +1272,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     public Filter enableFilter(final String filterName) {
         setOpenSessionEvent(new EnableFilterOpenSessionEvent(filterName));
 
-        // TODO(maxr) what do we return here?  A sharded filter?
+        // TODO(maxr) what do we return here? A sharded filter?
         return null;
     }
 
@@ -1385,7 +1336,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
             }
         }
 
-        // we do not allow application-supplied connections, so we can always return null
+        // we do not allow application-supplied connections, so we can always
+        // return null
         return null;
     }
 
@@ -1399,7 +1351,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     }
 
     /**
-     * Unsupported.  This is a technical decision.
+     * Unsupported. This is a technical decision.
      */
     @Override
     public void reconnect(final Connection connection) throws HibernateException {
@@ -1450,7 +1402,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     /**
      * All methods below fulfill the org.hibernate.classic.Session interface.
      * These methods are all deprecated, and since we don't really have any
-     * legacy Hibernate code at Google so we're simply not going to support them.
+     * legacy Hibernate code at Google so we're simply not going to support
+     * them.
      */
 
     /**
@@ -1485,8 +1438,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
      */
     @Override
     @Deprecated
-    public Object saveOrUpdateCopy(final String entityName, final Object object, final Serializable id)
-            throws HibernateException {
+    public Object saveOrUpdateCopy(final String entityName, final Object object, final Serializable id) throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
@@ -1558,8 +1510,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
      */
     @Override
     @Deprecated
-    public Collection filter(final Object collection, final String filter, final Object value, final Type type)
-            throws HibernateException {
+    public Collection filter(final Object collection, final String filter, final Object value, final Type type) throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
@@ -1568,8 +1519,7 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
      */
     @Override
     @Deprecated
-    public Collection filter(final Object collection, final String filter, final Object[] values, final Type[] types)
-            throws HibernateException {
+    public Collection filter(final Object collection, final String filter, final Object[] values, final Type[] types) throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
@@ -1674,7 +1624,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
     };
 
     private Shard getShardForObject(final Object obj, final List<Shard> shardsToConsider) {
-        // TODO(maxr) optimize this by keeping an identity map of objects to shardId
+        // TODO(maxr) optimize this by keeping an identity map of objects to
+        // shardId
         for (final Shard shard : shardsToConsider) {
             if (shard.getSession() != null && shard.getSession().contains(obj)) {
                 return shard;
@@ -1698,7 +1649,8 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     public ShardId getShardIdForObject(final Object obj, final List<Shard> shardsToConsider) {
         // TODO(maxr)
-        // Also, wouldn't it be faster to first see if there's just a single shard
+        // Also, wouldn't it be faster to first see if there's just a single
+        // shard
         // id mapped to the shard?
         final Shard shard = getShardForObject(obj, shardsToConsider);
         if (shard == null) {
@@ -1726,7 +1678,9 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
                 // HSHARDS-64
 
                 // ========================
-                // TODO(tomislav): also use shard resolution strategy if it returns only 1 shard; throw this error in config instead of here
+                // TODO(tomislav): also use shard resolution strategy if it
+                // returns only 1 shard; throw this error in config instead of
+                // here
                 throw new HibernateException("Can not use virtual sharding with non-shard resolving id gen");
             }
         }
@@ -1794,15 +1748,16 @@ public class ShardedSessionImpl implements ShardedSession, ShardedSessionImpleme
 
     /**
      * Helper method we can use when we need to find the Shard with which a
-     * specified object is associated and invoke the method on that Shard.
-     * If the object isn't associated with a Session we just invoke it on a
-     * random Session with the expectation that this will cause an error.
+     * specified object is associated and invoke the method on that Shard. If
+     * the object isn't associated with a Session we just invoke it on a random
+     * Session with the expectation that this will cause an error.
      */
     <T> T invokeOnShardWithObject(final ShardOperation<T> so, final Object object) throws HibernateException {
         final ShardId shardId = getShardIdForObject(object);
         Shard shardToUse;
         if (shardId == null) {
-            // just ask this question of a random shard so we get the proper error
+            // just ask this question of a random shard so we get the proper
+            // error
             shardToUse = shards.get(0);
         } else {
             shardToUse = shardIdsToShards.get(shardId);
