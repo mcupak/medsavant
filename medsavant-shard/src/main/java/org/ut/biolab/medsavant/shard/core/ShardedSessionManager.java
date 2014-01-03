@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.variant;
+package org.ut.biolab.medsavant.shard.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;

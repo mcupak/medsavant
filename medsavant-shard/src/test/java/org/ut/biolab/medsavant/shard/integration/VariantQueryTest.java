@@ -45,13 +45,13 @@ import org.hibernate.type.StringType;
 import org.hibernate.type.Type;
 import org.testng.annotations.Test;
 import org.ut.biolab.medsavant.shard.AbstractShardTest;
-import org.ut.biolab.medsavant.shard.common.EntityStyle;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 import org.ut.biolab.medsavant.shard.mapping.ClassField;
 import org.ut.biolab.medsavant.shard.mapping.EntityGenerator;
 import org.ut.biolab.medsavant.shard.mapping.VariantEntityGenerator;
 import org.ut.biolab.medsavant.shard.mapping.VariantMappingGenerator;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
-import org.ut.biolab.medsavant.shard.variant.Variant;
+import org.ut.biolab.medsavant.shard.strategy.Variant;
+import org.ut.biolab.medsavant.shard.util.EntityStyle;
 
 /**
  * Tests to verify different types of queries.

@@ -28,7 +28,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.db;
+package org.ut.biolab.medsavant.shard.server;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -40,10 +40,10 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.shards.criteria.ShardedCriteriaImpl;
 import org.hibernate.type.StringType;
 import org.hibernate.type.Type;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 import org.ut.biolab.medsavant.shard.mapping.SchemaMappingUtils;
 import org.ut.biolab.medsavant.shard.mapping.VariantEntityGenerator;
 import org.ut.biolab.medsavant.shard.mapping.VariantMappingGenerator;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
 import org.ut.biolab.medsavant.shared.db.TableSchema;
 import org.ut.biolab.medsavant.shared.model.Range;
 

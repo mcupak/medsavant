@@ -39,11 +39,11 @@ import java.util.List;
 import org.hibernate.Session;
 import org.testng.annotations.Test;
 import org.ut.biolab.medsavant.shard.AbstractShardTest;
-import org.ut.biolab.medsavant.shard.db.NonShardDBUtils;
-import org.ut.biolab.medsavant.shard.file.FileUtils;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.io.FileUtils;
+import org.ut.biolab.medsavant.shard.nonshard.NonShardDBUtils;
 import org.ut.biolab.medsavant.shard.nonshard.ShardConfigurationUtil;
 import org.ut.biolab.medsavant.shard.nonshard.ShardedConnectionController;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
 
 /**
  * Tests to verify DDL is working.

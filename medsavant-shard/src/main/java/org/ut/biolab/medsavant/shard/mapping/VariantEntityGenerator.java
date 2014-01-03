@@ -44,7 +44,7 @@ import javax.tools.ToolProvider;
 import jodd.io.FileUtil;
 import jodd.util.ClassLoaderUtil;
 
-import org.ut.biolab.medsavant.shard.file.FileUtils;
+import org.ut.biolab.medsavant.shard.io.FileUtils;
 import org.ut.biolab.medsavant.shared.util.DirectorySettings;
 
 /**
@@ -56,7 +56,7 @@ import org.ut.biolab.medsavant.shared.util.DirectorySettings;
 public class VariantEntityGenerator implements EntityGenerator {
     private static final String PACK_BEG = "package ";
     private static final String PACK_END = ";\n";
-    private static final String PACK = "org.ut.biolab.medsavant.shard.variant";
+    private static final String PACK = "org.ut.biolab.medsavant.shard";
     private static final String IMPORT = "import java.io.Serializable;\n";
     private static final String CLASS_START = "public class ";
     private static final String CLASS_END = "}";

@@ -31,7 +31,7 @@
 package org.ut.biolab.medsavant.shard.nonshard;
 
 import org.hibernate.shards.cfg.ShardConfiguration;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 
 /**
  * Helpers for manipulation of shard configuration.

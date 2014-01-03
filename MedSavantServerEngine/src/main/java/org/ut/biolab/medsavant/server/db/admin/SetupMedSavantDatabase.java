@@ -27,7 +27,7 @@ import java.sql.SQLException;
 
 import org.ut.biolab.medsavant.server.MedSavantServerEngine;
 import org.ut.biolab.medsavant.server.db.MedSavantDatabase;
-import org.ut.biolab.medsavant.shard.db.ShardedDatabaseSetupHelper;
+import org.ut.biolab.medsavant.shard.server.ShardedDatabaseSetupHelper;
 import org.ut.biolab.medsavant.shared.db.Settings;
 import org.ut.biolab.medsavant.shared.model.Chromosome;
 import org.ut.biolab.medsavant.shared.model.UserLevel;

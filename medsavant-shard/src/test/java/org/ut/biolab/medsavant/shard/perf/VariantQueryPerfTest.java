@@ -47,9 +47,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 import org.ut.biolab.medsavant.shard.mapping.VariantEntityGenerator;
 import org.ut.biolab.medsavant.shard.mapping.VariantMappingGenerator;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
 
 /**
  * Performance tests for typical queries on sharded variants.

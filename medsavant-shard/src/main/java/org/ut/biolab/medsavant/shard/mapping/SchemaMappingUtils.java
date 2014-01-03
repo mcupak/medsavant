@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 import org.ut.biolab.medsavant.shared.db.TableSchema;
 
 import com.healthmarketscience.sqlbuilder.dbspec.basic.DbColumn;

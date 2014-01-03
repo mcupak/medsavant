@@ -32,7 +32,7 @@ package org.ut.biolab.medsavant.shard.perf;
 
 import org.testng.annotations.BeforeClass;
 import org.ut.biolab.medsavant.shard.AbstractShardTest;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 
 /**
  * @author <a href="mailto:mirocupak@gmail.com">Miroslav Cupak</a>

@@ -28,7 +28,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.file;
+package org.ut.biolab.medsavant.shard.io;
 
 import org.ut.biolab.medsavant.shared.format.BasicVariantColumns;
 

@@ -28,7 +28,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.common;
+package org.ut.biolab.medsavant.shard.util;
 
 import java.util.Collection;
 

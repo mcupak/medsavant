@@ -38,7 +38,6 @@ import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
 import org.hibernate.shards.cfg.ShardConfiguration;
-import org.ut.biolab.medsavant.shard.db.NonShardDBUtils;
 
 /**
  * Thread executing a query on a shard.

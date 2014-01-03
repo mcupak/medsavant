@@ -44,7 +44,7 @@ import org.ut.biolab.medsavant.server.db.util.DBSettings;
 import org.ut.biolab.medsavant.server.db.util.DBUtils;
 import org.ut.biolab.medsavant.server.db.variants.VariantManager;
 import org.ut.biolab.medsavant.server.db.variants.VariantManagerUtils;
-import org.ut.biolab.medsavant.shard.db.ShardedDatabaseSetupHelper;
+import org.ut.biolab.medsavant.shard.server.ShardedDatabaseSetupHelper;
 import org.ut.biolab.medsavant.shared.db.TableSchema;
 import org.ut.biolab.medsavant.shared.format.AnnotationFormat;
 import org.ut.biolab.medsavant.shared.format.BasicVariantColumns;

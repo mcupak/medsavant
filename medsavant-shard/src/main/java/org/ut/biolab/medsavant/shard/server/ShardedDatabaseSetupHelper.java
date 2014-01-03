@@ -28,11 +28,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.db;
+package org.ut.biolab.medsavant.shard.server;
 
 import org.hibernate.Session;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 import org.ut.biolab.medsavant.shard.nonshard.ShardedConnectionController;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
 
 /**
  * Helper class for setup of a sharded database.

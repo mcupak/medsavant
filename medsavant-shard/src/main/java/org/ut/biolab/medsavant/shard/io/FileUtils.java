@@ -28,7 +28,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.file;
+package org.ut.biolab.medsavant.shard.io;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -37,7 +37,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 
 /**
  * Utils for file manipulation.

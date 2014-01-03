@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.hibernate.shards.cfg.ShardConfiguration;
-import org.ut.biolab.medsavant.shard.variant.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
 
 /**
  * Controller for connections to individual shards.

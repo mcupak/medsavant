@@ -28,7 +28,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.ut.biolab.medsavant.shard.variant;
+package org.ut.biolab.medsavant.shard.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -41,8 +41,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.hibernate.Session;
-import org.ut.biolab.medsavant.shard.file.FileUtils;
-import org.ut.biolab.medsavant.shard.file.TSVUtils;
+import org.ut.biolab.medsavant.shard.core.ShardedSessionManager;
+import org.ut.biolab.medsavant.shard.io.FileUtils;
+import org.ut.biolab.medsavant.shard.io.TSVUtils;
 import org.ut.biolab.medsavant.shard.nonshard.ShardedConnectionController;
 import org.ut.biolab.medsavant.shard.strategy.PositionShardSelector;
 import org.ut.biolab.medsavant.shared.util.MiscUtils;
