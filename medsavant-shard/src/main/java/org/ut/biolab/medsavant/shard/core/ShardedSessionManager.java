@@ -50,7 +50,6 @@ import org.ut.biolab.medsavant.shard.strategy.PositionShardStrategyFactory;
  * 
  */
 public class ShardedSessionManager {
-    // TODO: check whether this is true
     public static final long MAX_VARIANT_POSITION = 250000000;
     private static final String RESOURCE_PREFIX = "hibernate";
     private static final String RESOURCE_SUFFIX = ".cfg.xml";
@@ -186,7 +185,6 @@ public class ShardedSessionManager {
             }
             VariantMappingGenerator.getInstance().setProperties(properties);
 
-            // buildConfig();
             return true;
         } else {
             return false;
@@ -212,7 +210,6 @@ public class ShardedSessionManager {
     public static synchronized boolean setTable(String table) {
         if (!getTable().equals(table)) {
             VariantMappingGenerator.getInstance().setTable(table);
-            // buildConfig();
             return true;
         }
         return false;

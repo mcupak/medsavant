@@ -22,6 +22,8 @@ package org.ut.biolab.medsavant.shard.mapping;
 import java.util.List;
 
 /**
+ * Factory for entities.
+ * 
  * @author <a href="mailto:mirocupak@gmail.com">Miroslav Cupak</a>
  * 
  */
