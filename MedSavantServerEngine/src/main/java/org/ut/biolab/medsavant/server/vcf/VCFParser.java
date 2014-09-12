@@ -1,20 +1,30 @@
 /**
- * Copyright (c) 2014 Marc Fiume <mfiume@cs.toronto.edu>
- * Unauthorized use of this file is strictly prohibited.
- * 
- * All rights reserved. No warranty, explicit or implicit, provided.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
- * SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
- * FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any
+ * later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this software; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA, or see the FSF site:
+ * http://www.fsf.org.
  */
 package org.ut.biolab.medsavant.server.vcf;
 
 import com.google.code.externalsorting.ExternalSort;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -22,7 +32,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import net.sf.samtools.util.BlockCompressedInputStream;
 import org.apache.commons.lang.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,8 +42,6 @@ import org.ut.biolab.medsavant.shared.format.BasicVariantColumns;
 import org.ut.biolab.medsavant.shared.model.MedSavantServerJobProgress;
 import org.ut.biolab.medsavant.shared.model.SessionExpiredException;
 import org.ut.biolab.medsavant.shared.serverapi.LogManagerAdapter;
-import org.ut.biolab.medsavant.shared.util.IOUtils;
-
 import org.ut.biolab.medsavant.shared.util.MiscUtils;
 import org.ut.biolab.medsavant.shared.vcf.VariantRecord;
 import org.ut.biolab.medsavant.shared.vcf.VariantRecord.VariantType;
@@ -42,7 +49,7 @@ import org.ut.biolab.medsavant.shared.vcf.VariantRecord.Zygosity;
 
 /**
  *
- * @author mfiume, rammar
+ * @author mfiume
  */
 public class VCFParser {
 
@@ -151,7 +158,7 @@ public class VCFParser {
         return parseVariantsFromReader(r, outfile, updateId, fileId, false);
     }
 
-   // private Map<String, BufferedWriter> chromOutOfOrderFileMap = new HashMap<String, BufferedWriter>();
+    // private Map<String, BufferedWriter> chromOutOfOrderFileMap = new HashMap<String, BufferedWriter>();
 /*
      private void writeOutOfOrderLine(String chrom, String[] line, String prefix) throws IOException {
      BufferedWriter handle = chromOutOfOrderFileMap.get(chrom);
@@ -163,16 +170,12 @@ public class VCFParser {
      }
      */
     /**
-     * Like parseVariantsFromReader, but use a pre-parsed header object (useful
-     * when reusing a header)
+     * Like parseVariantsFromReader, but use a pre-parsed header object (useful when reusing a header)
      *
      * @param r A reader for .vcf file being parsed
-     * @param header The VCF header object to use. If header == null, the first
-     * header line in the file will be used
-     * @param outputLinesLimit The number of lines to write to output before
-     * returning
-     * @param outfile The temporary output file, with variants parsed 1 per
-     * position per individual
+     * @param header The VCF header object to use. If header == null, the first header line in the file will be used
+     * @param outputLinesLimit The number of lines to write to output before returning
+     * @param outfile The temporary output file, with variants parsed 1 per position per individual
      * @param updateId The updateId to prepend to each line
      * @param fileId The fileId to prepend to each line
      * @return number of lines written to outfile
@@ -367,7 +370,7 @@ public class VCFParser {
         ExternalSort.mergeSortedFiles(batch, outputFile, comparator, EXTERNALSORT_CHARSET,
                 eliminateDuplicateRows, false, useGzipForTmpFiles);
 
-        if (!IOUtils.moveFile(outputFile, sortedTDF)) {
+        if (!outputFile.renameTo(sortedTDF)) {
             throw new IOException("Can't rename merged file " + outputFile.getCanonicalPath() + " to " + sortedTDF.getCanonicalPath());
         } else {
             LOG.info("Outputted sorted TDF file to " + sortedTDF);
@@ -695,6 +698,11 @@ public class VCFParser {
                         sampleInfo = sampleInfo.replace(";", ",");
                         sampleVariantRecord.setSampleInformation(format, sampleInfo);
                     } catch (Exception e) {
+                    }
+
+                    if (sampleVariantRecord.getChrom().length() > BasicVariantColumns.CHROM.getColumnLength()) {
+                        // ignore invalid chroms
+                        continue;
                     }
 
                     records.add(sampleVariantRecord);
