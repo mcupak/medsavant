@@ -38,7 +38,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.ut.biolab.medsavant.MedSavantClient;
 import org.ut.biolab.medsavant.shared.format.BasicVariantColumns;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
 import org.ut.biolab.medsavant.shared.model.Gene;
 import org.ut.biolab.medsavant.client.project.ProjectController;
 import org.ut.biolab.medsavant.client.reference.ReferenceController;
@@ -315,7 +315,8 @@ public class DetailedVariantSubInspector extends SubInspector implements BasicVa
 
         p.setValue(KEY_QUAL, ViewUtil.numToString(r.getQual()));
         p.setValue(KEY_DBSNP, checkNull(r.getDbSNPID()));
-        p.ellipsifyValues(StaticInspectorPanel.INSPECTOR_INNER_WIDTH);
+        //p.ellipsifyValues(StaticInspectorPanel.INSPECTOR_INNER_WIDTH);
+        p.simpleEllipsify();
 
         KeyValuePairPanel infoPanel = getInfoKVPPanel(r.getCustomInfo());
         infoPanel.ellipsifyValues(StaticInspectorPanel.INSPECTOR_INNER_WIDTH);

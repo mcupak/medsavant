@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.ut.biolab.medsavant.MedSavantClient;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
 import org.ut.biolab.medsavant.shared.model.UserLevel;
 import org.ut.biolab.medsavant.client.util.Controller;
 import org.ut.biolab.medsavant.client.util.MedSavantExceptionHandler;
@@ -54,7 +54,7 @@ public class UserController extends Controller<UserEvent> {
             MedSavantExceptionHandler.handleSessionExpiredException(ex);
             return;
         }
-        fireEvent(new UserEvent(UserEvent.Type.ADDED, name));
+        fireEvent(new UserEvent(UserEvent.Type.ADDED, name, level));
     }
 
     public void removeUser(String name) throws SQLException, RemoteException {
@@ -64,7 +64,7 @@ public class UserController extends Controller<UserEvent> {
             MedSavantExceptionHandler.handleSessionExpiredException(ex);
             return;
         }
-        fireEvent(new UserEvent(UserEvent.Type.REMOVED, name));
+        fireEvent(new UserEvent(UserEvent.Type.REMOVED, name, UserLevel.NONE));
     }
 
     public String[] getUserNames() throws SQLException, RemoteException {

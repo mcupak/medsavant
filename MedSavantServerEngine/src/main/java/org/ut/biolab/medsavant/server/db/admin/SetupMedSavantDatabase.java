@@ -47,8 +47,8 @@ import org.ut.biolab.medsavant.server.db.util.DBUtils;
 import org.ut.biolab.medsavant.shared.db.TableSchema;
 import org.ut.biolab.medsavant.shared.model.SessionExpiredException;
 import org.ut.biolab.medsavant.shared.serverapi.SetupAdapter;
-import org.ut.biolab.medsavant.shared.util.NetworkUtils;
 import org.ut.biolab.medsavant.shared.util.VersionSettings;
+import org.ut.biolab.medsavant.shared.util.WebResources;
 
 /**
  *
@@ -57,7 +57,7 @@ import org.ut.biolab.medsavant.shared.util.VersionSettings;
 public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject implements SetupAdapter {
 
     private static final Log LOG = LogFactory.getLog(SetupMedSavantDatabase.class);
-    
+
     //public static final boolean ENGINE_INFINIDB = false;
     private static SetupMedSavantDatabase instance;
     private static final String BRIGHTHOUSE_ENGINE = "BRIGHTHOUSE";
@@ -92,7 +92,6 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
 
         UserManager userMgr = UserManager.getInstance();
 
-        
         createTables(sessID);
 
         try {
@@ -152,7 +151,7 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
                     + ") ENGINE=MyISAM;");
             Set<String> users = UserManager.getInstance().getAllUserNames(sessID);
             for (String u : users) {
-                conn.executePreparedUpdate(String.format("GRANT INSERT ON %s TO ?@'localhost'", MedSavantDatabase.ServerlogTableSchema.getTableName()), u);
+                conn.executePreparedUpdate(String.format("GRANT INSERT ON %s TO ?", MedSavantDatabase.ServerlogTableSchema.getTableName()), u);
             }
 
             conn.executeUpdate(MedSavantDatabase.RegionSetTableSchema.getCreateQuery() + " ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin");
@@ -301,6 +300,87 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
                     + "UNIQUE KEY `hospital_id` (`hospital_id`)"
                     + ") ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin;");
 
+            /*
+             String q = 
+             "CREATE TABLE "+MedSavantDatabase.UserCommentTableSchema.getTableName()+"("
+             + "	project_id INTEGER,"
+             + "	reference_id INTEGER,"
+             + "	chrom varchar(5),"
+             + "	start_position integer,"
+             + "	end_position integer,"
+             + "	ref varchar(255),"
+             + "	alt varchar(255),	"
+             + "	ontology_id integer, "
+             + "	user varchar(200),"
+             + "	is_approved boolean not null default false,"
+             + "	is_included boolean not null default false,"
+             + "	is_pending_review boolean not null default false,"
+             + "	creation_date DATE,"
+             + "	last_modified TIMESTAMP,"
+             + "	variant_comment text,"
+             + "	primary key(chrom, start_position, end_position, ref, alt),"
+             + "	FOREIGN KEY(ontology_id) REFERENCES ontology(id) ON UPDATE CASCADE ON DELETE RESTRICT," //foreign keys ignored for now.
+             + "	FOREIGN KEY(project_id) REFERENCES project(project_id) ON UPDATE CASCADE ON DELETE CASCADE,"
+             + "	FOREIGN KEY(reference_id) REFERENCES reference(reference_id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+             + ")ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin COMMENT='Disease-specific comments, diseases are ontology terms.'"
+             ;
+             */
+            String q = "CREATE TABLE " + MedSavantDatabase.UserRoleTableSchema.getTableName() + "("
+                    + " user_role_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+                    + " role_name varchar(64) not null, "
+                    + " role_description text "
+                    + ")ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin COMMENT='User role definitions'";
+            LOG.info(q);
+            conn.executeUpdate(q);
+
+            q = "CREATE TABLE " + MedSavantDatabase.UserRoleAssignmentTableSchema.getTableName() + "("
+                    + " user VARCHAR(300) NOT NULL, "
+                    + " fk_user_role_id INTEGER NOT NULL, "
+                    + " PRIMARY KEY(user, fk_user_role_id), "
+                    + " FOREIGN KEY(fk_user_role_id) REFERENCES " + MedSavantDatabase.UserRoleTableSchema.getTableName() + "(" + MedSavantDatabase.UserRoleTableSchema.COLUMNNAME_OF_ID + ") ON UPDATE CASCADE ON DELETE CASCADE "
+                    + ")ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin COMMENT='Assignments of users to roles.'";
+            LOG.info(q);
+            conn.executeUpdate(q);
+
+            q = "CREATE TABLE " + MedSavantDatabase.UserCommentGroupTableSchema.getTableName() + "("
+                    + " user_comment_group_id	INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+                    + "	project_id INTEGER,"
+                    + "	reference_id INTEGER,"
+                    + "	chrom varchar(5),"
+                    + "	start_position integer,"
+                    + "	end_position integer,"
+                    + "	ref varchar(255),"
+                    + "	alt varchar(255),	"
+                    + "	UNIQUE(project_id, reference_id, chrom, start_position, end_position, ref, alt),"
+                    + "	FOREIGN KEY(project_id) REFERENCES " + MedSavantDatabase.ProjectTableSchema.getTableName() + "(" + MedSavantDatabase.ProjectTableSchema.COLUMNNAME_OF_PROJECT_ID + ") ON UPDATE CASCADE ON DELETE CASCADE,"
+                    + "	FOREIGN KEY(reference_id) REFERENCES " + MedSavantDatabase.ReferenceTableSchema.getTableName() + "(" + MedSavantDatabase.ReferenceTableSchema.COLUMNNAME_OF_REFERENCE_ID + ") ON UPDATE RESTRICT ON DELETE RESTRICT,"
+                    + " KEY(chrom) "
+                    + ")ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin COMMENT='Disease-specific comments, diseases are ontology terms.'";
+
+            LOG.info(q);
+            conn.executeUpdate(q);
+
+            q = "CREATE TABLE " + MedSavantDatabase.UserCommentTableSchema.getTableName() + "("
+                    + " user_comment_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+                    + " fk_user_comment_group_id INTEGER NOT NULL, "
+                    + " fk_parent_user_comment_id INTEGER, "
+                    + "	user varchar(200),"
+                    + " ontology varchar(10), "
+                    + "	ontology_id varchar(30), "
+                    + "	is_approved boolean not null default false,"
+                    + "	is_included boolean not null default false,"                    
+                    + " is_deleted boolean not null default false,"
+                    + "	creation_date DATE,"
+                    + "	last_modified TIMESTAMP,"
+                    + "	variant_comment text,"
+                    + " FOREIGN KEY(ontology) REFERENCES " + MedSavantDatabase.OntologyTableSchema.getTableName() + "(" + MedSavantDatabase.OntologyColumns.ONTOLOGY.getColumnName() + ") ON UPDATE CASCADE ON DELETE RESTRICT," //foreign keys ignored for now.
+                    + "	FOREIGN KEY(ontology_id) REFERENCES " + MedSavantDatabase.OntologyTableSchema.getTableName() + "(" + MedSavantDatabase.OntologyColumns.ID.getColumnName() + ") ON UPDATE CASCADE ON DELETE RESTRICT," //foreign keys ignored for now.
+                    + "	FOREIGN KEY(fk_user_comment_group_id) REFERENCES " + MedSavantDatabase.UserCommentGroupTableSchema.getTableName() + "(" + MedSavantDatabase.UserCommentGroupTableSchema.COLUMNNAME_OF_USER_COMMENT_GROUP_ID + ") ON UPDATE RESTRICT ON DELETE RESTRICT,"
+                    + "	FOREIGN KEY(fk_parent_user_comment_id) REFERENCES " + MedSavantDatabase.UserCommentTableSchema.getTableName() + "(" + MedSavantDatabase.UserCommentTableSchema.COLUMNNAME_OF_USER_COMMENT_ID + ") ON UPDATE RESTRICT ON DELETE RESTRICT"
+                    + ")ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_bin";
+            LOG.info(q);
+            conn.executeUpdate(q);
+
             String createVariantStatement;
             if (MedSavantServerEngine.USE_INFINIDB_ENGINE) {
 
@@ -386,26 +466,25 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
 
     public static String getVariantFileIBTableName() {
         TableSchema table = MedSavantDatabase.VariantFileIBTableSchema;
-        return table.getTableName();        
+        return table.getTableName();
     }
-    
-    
+
     public static synchronized TableSchema makeTemporaryVariantFileIBTable(String sid) throws IOException, SQLException, SessionExpiredException {
         int i = 0;
         String tableName;
-        final String suffixPrefix="_ib_tmp";
+        final String suffixPrefix = "_ib_tmp";
         String suffix;
-        do{
+        do {
             suffix = suffixPrefix + i;
-            tableName = VariantFileTableSchema.TABLE_NAME_PREFIX+suffix;
+            tableName = VariantFileTableSchema.TABLE_NAME_PREFIX + suffix;
             i++;
-        }while(DBUtils.tableExists(sid, tableName));        
-        
-        makeVariantFileTable(sid, true, tableName, BRIGHTHOUSE_ENGINE);        
+        } while (DBUtils.tableExists(sid, tableName));
+
+        makeVariantFileTable(sid, true, tableName, BRIGHTHOUSE_ENGINE);
         return new MedSavantDatabase.VariantFileTableSchema(schema, suffix);
-        
+
     }
-    
+
     public static void makeVariantFileIBTable(String sid) throws IOException, SQLException, SessionExpiredException {
         makeVariantFileTable(sid, true);
     }
@@ -423,27 +502,26 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
         }
         makeVariantFileTable(sid, brighthouse, tableName, engine);
     }
-        
+
     private static void makeVariantFileTable(String sid, boolean brighthouse, String tableName, String engine) throws IOException, SQLException, SessionExpiredException {
         TableSchema table = MedSavantDatabase.VariantFileTableSchema;
-        
+
         String extras = "";
-        if(!brighthouse){
+        if (!brighthouse) {
             extras = ",UNIQUE(upload_id, file_id), UNIQUE(file_id)";
         }
         ConnectionController.executeUpdate(sid, "DROP TABLE IF EXISTS " + tableName);
         String query = "CREATE TABLE  `" + tableName + "` ("
                 + "`upload_id` int(11) NOT NULL,"
-                + "`file_id` int(11) NOT NULL "+(brighthouse?"":"AUTO_INCREMENT")+","
+                + "`file_id` int(11) NOT NULL " + (brighthouse ? "" : "AUTO_INCREMENT") + ","
                 + "`project_id` int(11) NOT NULL,"
                 + "`reference_id` int(11) NOT NULL,"
                 + "`file_name` varchar(500) COLLATE latin1_bin NOT NULL"
-                + extras 
+                + extras
                 + ") ENGINE=" + engine + " DEFAULT CHARSET=latin1 COLLATE=latin1_bin";
-        
+
         LOG.info(query);
-        ConnectionController.executeUpdate(sid,query);
-                
+        ConnectionController.executeUpdate(sid, query);
 
         if (brighthouse) {
             DBUtils.copyTable(sid, MedSavantDatabase.VariantFileTableSchema.getTableName(), getVariantFileIBTableName());
@@ -479,8 +557,8 @@ public class SetupMedSavantDatabase extends MedSavantServerUnicastRemoteObject i
 
         try {
             // bin	name	chrom	strand	txStart	txEnd	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	score	name2	cdsStartStat	cdsEndStat	exonFrames
-            loader.loadGenes(sessID, NetworkUtils.getKnownGoodURL("http://genomesavant.com/data/hg18/hg18.refGene.gz").toURI(), "hg18", "RefSeq", null, "transcript", "chrom", null, "start", "end", "codingStart", "codingEnd", null, "exonStarts", "exonEnds", null, "name");
-            loader.loadGenes(sessID, NetworkUtils.getKnownGoodURL("http://genomesavant.com/data/medsavant/hg19/refGene.txt.gz").toURI(), "hg19", "RefSeq", null, "transcript", "chrom", null, "start", "end", "codingStart", "codingEnd", null, "exonStarts", "exonEnds", null, "name");
+            loader.loadGenes(sessID, WebResources.REFGENE_HG18_URL.toURI(), "hg18", "RefSeq", null, "transcript", "chrom", null, "start", "end", "codingStart", "codingEnd", null, "exonStarts", "exonEnds", null, "name");
+            loader.loadGenes(sessID, WebResources.REFGENE_HG19_URL.toURI(), "hg19", "RefSeq", null, "transcript", "chrom", null, "start", "end", "codingStart", "codingEnd", null, "exonStarts", "exonEnds", null, "name");
             //refGene.txt.gz
             //loader.loadGenes(sessID, NetworkUtils.getKnownGoodURL("http://genomesavant.com/data/hg19/hg19.refGene.gz").toURI(), "hg19", "RefSeq", null, "transcript", "chrom", null, "start", "end", "codingStart", "codingEnd", null, "exonStarts", "exonEnds", null, "name");
         } catch (IOException iox) {

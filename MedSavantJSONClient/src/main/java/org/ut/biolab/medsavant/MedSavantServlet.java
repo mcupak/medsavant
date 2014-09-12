@@ -85,6 +85,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.healthmarketscience.sqlbuilder.Condition;
+import java.io.File;
+import java.io.FileInputStream;
 
 public class MedSavantServlet extends HttpServlet implements MedSavantServerRegistry {
 
@@ -335,7 +337,7 @@ public class MedSavantServlet extends HttpServlet implements MedSavantServerRegi
 
         Registry registry;
 
-        LOG.debug("Connecting to MedSavantServerEngine @ " + serverAddress + ":" + serverPort + "...");
+        LOG.info("Connecting to MedSavantServerEngine @ " + serverAddress + ":" + serverPort + "...");
 
         try {
             registry = LocateRegistry.getRegistry(serverAddress, port, new SslRMIClientSocketFactory());
@@ -347,12 +349,12 @@ public class MedSavantServlet extends HttpServlet implements MedSavantServerRegi
         } catch (ConnectIOException ex) {
             if (ex.getCause() instanceof SSLHandshakeException) {
                 registry = LocateRegistry.getRegistry(serverAddress, port);
-                LOG.debug("Retrieving adapters...");
+                LOG.info("Retrieving adapters...");
                 setAdaptersFromRegistry(registry);
                 LOG.info("Connected without SSL/TLS encryption");
             }
         }
-        LOG.debug("Done");
+        LOG.info("Done");
 
     }
 
@@ -564,6 +566,38 @@ public class MedSavantServlet extends HttpServlet implements MedSavantServerRegi
         }
     }
 
+    private InputStream getConfigInputStream() throws ServletException, IOException{
+     String[] configFileLocations = getServletContext().getInitParameter("MedSavantConfigFile").split(":");
+            
+            File f = null;
+            for(String cf : configFileLocations){
+                
+                if(!cf.startsWith("/")){
+                    LOG.info("Looking for configuration from path relative to servlet context "+cf);                    
+                    InputStream in =  getServletContext().getResourceAsStream("/"+cf);                    
+                    if(in != null){
+                        LOG.info("Reading configuration from /"+cf);
+                        return in;
+                    }
+                }else{
+                    f = new File(cf);
+                    LOG.info("Looking for config file at: "+f.getAbsolutePath());
+                    if(f.exists()){
+                        break;
+                    }else{
+                        f = null;
+                    }
+                }
+            }
+            if(f == null){
+                throw new ServletException("Can't load configuration - no config file found!");
+            }
+            
+            LOG.info("Reading configuration from "+f.getAbsolutePath());                        
+                        
+            return new FileInputStream(f);                
+    }
+    
     private void loadConfiguration() throws ServletException {
         String host = null;
         String uname = null;
@@ -571,10 +605,9 @@ public class MedSavantServlet extends HttpServlet implements MedSavantServerRegi
         String dbase = null;
         String maxSimultaneousUploadsStr = null;
         int p = -1;
-        try {
-            String configFileLocation = getServletContext().getInitParameter("MedSavantConfigFile");
-            InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(configFileLocation);
-            Properties props = new Properties();
+        try {                                          
+            Properties props = new Properties();            
+            InputStream in = getConfigInputStream();
             props.load(in);
             in.close();
 

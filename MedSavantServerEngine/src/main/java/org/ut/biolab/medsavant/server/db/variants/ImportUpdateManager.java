@@ -51,6 +51,7 @@ import org.ut.biolab.medsavant.server.db.admin.SetupMedSavantDatabase;
 import org.ut.biolab.medsavant.server.db.util.CustomTables;
 import org.ut.biolab.medsavant.server.db.util.DBSettings;
 import org.ut.biolab.medsavant.server.db.util.DBUtils;
+import org.ut.biolab.medsavant.server.phasing.BEAGLEWrapper;
 import org.ut.biolab.medsavant.server.serverapi.AnnotationLogManager;
 import org.ut.biolab.medsavant.server.serverapi.AnnotationManager;
 import org.ut.biolab.medsavant.server.serverapi.PatientManager;
@@ -63,10 +64,12 @@ import org.ut.biolab.medsavant.shared.format.BasicVariantColumns;
 import org.ut.biolab.medsavant.shared.format.CustomField;
 import org.ut.biolab.medsavant.shared.model.Annotation;
 import org.ut.biolab.medsavant.shared.model.AnnotationLog;
+import org.ut.biolab.medsavant.shared.model.MedSavantServerJobProgress;
 import org.ut.biolab.medsavant.shared.model.SessionExpiredException;
 import org.ut.biolab.medsavant.shared.serverapi.LogManagerAdapter;
 import org.ut.biolab.medsavant.shared.util.BinaryConditionMS;
 import org.ut.biolab.medsavant.shared.util.DirectorySettings;
+import org.ut.biolab.medsavant.shared.util.IOUtils;
 import org.ut.biolab.medsavant.shared.util.MiscUtils;
 
 /**
@@ -80,7 +83,7 @@ public class ImportUpdateManager {
     /**
      * IMPORT FILES INTO AN EXISTING TABLE
      */
-    public static int doImport(final String sessionID, final int projectID, final int referenceID, final File[] allVCFFiles, final boolean includeHomozygousReferenceCalls, final boolean preAnnotateWithJannovar, final String[][] tags) throws IOException, SQLException, Exception {
+    public static int doImport(final String sessionID, final int projectID, final int referenceID, final File[] allVCFFiles, final boolean includeHomozygousReferenceCalls, final boolean preAnnotateWithJannovar, final boolean doPhasing, final String[][] tags) throws IOException, SQLException, Exception {
 
         String userId = SessionManager.getInstance().getUserForSession(sessionID);
         final String database = SessionManager.getInstance().getDatabaseForSession(sessionID);
@@ -123,7 +126,7 @@ public class ImportUpdateManager {
                         getJobProgress().setMessage("Preparing VCFs " + startFile + " - " + endFile + " of " + allVCFFiles.length + " for further annotations");
                         // prepare for annotation
                         TSVFile[] importedTSVFiles
-                                = doConvertVCFToTSV(sessionID, vcfFiles, preAnnotateWithJannovar, updateID, projectID, referenceID,
+                                = doConvertVCFToTSV(sessionID, vcfFiles, preAnnotateWithJannovar, doPhasing, updateID, projectID, referenceID,
                                         includeHomozygousReferenceCalls, workingDirectory, this);
 
                         getJobProgress().setMessage("Annotating VCFs " + startFile + " - " + endFile + " of " + allVCFFiles.length);
@@ -219,7 +222,6 @@ public class ImportUpdateManager {
 
                         //String qstr = query.toString();
                         //LOG.info(qstr);
-
                         //Copy the results of the restricted join to the new subset table called 'tableNameSubset'.
                         DBUtils.copyQueryResultToNewTable(sessionID, query, tableNameSubset, this);
                     } finally {
@@ -228,7 +230,7 @@ public class ImportUpdateManager {
                             DBUtils.dropTable(sessionID, tmpTable.getTableName());
                         }
                     }
-                                        
+
                     registerTable(sessionID, projectID, referenceID, updateID, currentTableName, tableNameSubset, allAnnotationIDs);
                     VariantManagerUtils.addTagsToUpload(sessionID, updateID, tags);
                     // create patients for all DNA ids in this update
@@ -372,16 +374,85 @@ public class ImportUpdateManager {
     /**
      * PARSING
      */
-    public static TSVFile[] doConvertVCFToTSV(String sessID, File[] vcfFiles, boolean preAnnotateWithJannovar, int updateID, int projectID, int referenceID, boolean includeHomozygousReferenceCalls, File workingDirectory, MedSavantServerJob parentJob) throws Exception {
+    public static TSVFile[] doConvertVCFToTSV(String sessID, File[] vcfFiles, boolean preAnnotateWithJannovar, boolean doPhasing, int updateID, int projectID, int referenceID, boolean includeHomozygousReferenceCalls, final File workingDirectory, MedSavantServerJob parentJob) throws Exception {
         final String database = SessionManager.getInstance().getDatabaseForSession(sessID);
         File outDir = createSubdir(workingDirectory, "converted");
         LOG.info("Converting VCF files to TSV, working directory is " + outDir.getAbsolutePath());
 
         File[] processedVCFs = vcfFiles;
         parentJob.getJobProgress().setMessage("Performing functional annotations for VCFs.");
-        if (preAnnotateWithJannovar) {
-            org.ut.biolab.medsavant.server.serverapi.LogManager.getInstance().addServerLog(sessID, LogManagerAdapter.LogType.INFO, "Annotating VCF files with Jannovar");
+        //In order to do phasing, we MUST preannotate with Jannovar, as Jannovar also does some preprocessing that Beagle requires.
+        if (doPhasing || preAnnotateWithJannovar) {
+            org.ut.biolab.medsavant.server.serverapi.LogManager.getInstance().addServerLog(sessID, LogManagerAdapter.LogType.INFO, "Annotating VCF files with Jannovar");            
             processedVCFs = new Jannovar(ReferenceManager.getInstance().getReferenceName(sessID, referenceID)).annotateVCFFiles(vcfFiles, database, projectID, workingDirectory);
+        }
+
+        if (doPhasing) {
+            final File[] phasedFiles = new File[processedVCFs.length];
+            parentJob.getJobProgress().setMessage("Phasing...");
+            LOG.info("Beginning phasing.");
+            List<MedSavantServerJob> threads = new ArrayList<MedSavantServerJob>(processedVCFs.length);
+            String username = SessionManager.getInstance().getUserForSession(sessID);
+            for (int i = 0; i < processedVCFs.length; ++i) {
+                final File vcfFile = processedVCFs[i];
+                final int fileIndex = i;
+                MedSavantServerJob msj = new MedSavantServerJob(username, "Phasing", parentJob) {
+                    @Override
+                    public boolean run() throws Exception {
+                        LOG.info("\tPhasing " + vcfFile.getAbsolutePath());
+                        File phasingWorkDir = null;
+                        try {
+                            phasingWorkDir = new File(workingDirectory, "phasing_" + fileIndex);
+                            if (!phasingWorkDir.exists()) {
+                                if (!phasingWorkDir.mkdirs()) {
+                                    throw new IOException("Could not create working phasing directory " + phasingWorkDir.getAbsolutePath());
+                                }
+                            }
+
+                            LOG.info("\tInitiating phasing on " + vcfFile.getAbsolutePath());
+                            BEAGLEWrapper bw = new BEAGLEWrapper(phasingWorkDir, vcfFile, 1);
+                            LOG.info("\tCalling bw.run");
+                            File f = bw.run();
+                            LOG.info("\tRun returned with " + ((f != null) ? f.getAbsolutePath() : "NULL"));
+                            File dst = new File(workingDirectory, f.getName());
+                            if (!IOUtils.moveFile(f, dst)) {
+                                throw new IOException("Couldn't move phased file " + f.getCanonicalPath());
+                            }
+                            phasedFiles[fileIndex] = dst;
+                        } catch (IllegalArgumentException iae) {
+                            if (iae.getMessage().contains("invalid allele")) {
+                                LOG.error("Skipping phasing for " + vcfFile.getCanonicalPath() + ", possibly because it contains structural variants.  exception: " + iae.getMessage());
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Skipping phasing for " + vcfFile.getCanonicalPath() + " due to unexpected exception", ex);
+                        } finally {
+                            if (phasingWorkDir.exists()) {
+                                LOG.info("\tDelete phasing directory " + phasingWorkDir.getAbsolutePath());
+                                IOUtils.deleteDirectory(phasingWorkDir);
+                            }
+                            if (phasedFiles[fileIndex] == null) {
+                                LOG.info("Phasing for file " + vcfFile.getAbsolutePath() + " was skipped.");
+                                phasedFiles[fileIndex] = vcfFile;
+                            }
+                        }
+                        LOG.info("\tPhasing " + vcfFile.getAbsolutePath() + " complete.");
+                        return true;
+                    }
+                };
+
+                //Disable multi-threading for now, as Beagle's main method is being invoked directly, 
+                //and may not be thread-safe.                
+                //threads.add(msj);
+                MedSavantServerEngine.submitLongJob(msj).get(); //invoke and wait.                
+            }
+            //See above -- multi-threading is disabled.
+            //MedSavantServerEngine.submitLongJobs(threads);
+            processedVCFs = phasedFiles;
+            LOG.info("Phasing complete.");
+        }//end if
+
+        for (File f : processedVCFs) {
+            LOG.info("Got processed VCF " + f.getAbsolutePath() + " and exists=" + f.exists());
         }
 
         parentJob.getJobProgress().setMessage("Parsing VCFs.");
@@ -401,7 +472,6 @@ public class ImportUpdateManager {
             fileID++;
             LOG.info("Queueing thread to parse " + vcfFile.getAbsolutePath());
         }
-        //MedSavantServerEngine.getLongExecutorService().invokeAll(threads);
         MedSavantServerEngine.submitLongJobs(threads);
 
         //VariantManagerUtils.processThreadsWithLimit(threads);
@@ -415,9 +485,9 @@ public class ImportUpdateManager {
             VariantParser t = (VariantParser) msg;
             tsvFiles[i++] = new TSVFile(new File(t.getOutputFilePath()), t.getNumVariants());
             if (!t.didSucceed()) {
-                
+
                 LOG.info("At least one parser thread errored out");
-                LOG.error("At least one parser thread ("+t.getVCF().getAbsolutePath()+") errored out", t.getException());
+                LOG.error("At least one parser thread (" + t.getVCF().getAbsolutePath() + ") errored out", t.getException());
                 t.getException().printStackTrace(); //TEMPORARY
                 throw t.getException();
             }

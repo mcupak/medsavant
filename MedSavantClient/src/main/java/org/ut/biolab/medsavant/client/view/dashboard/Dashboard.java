@@ -1,3 +1,16 @@
+/**
+ * Copyright (c) 2014 Marc Fiume <mfiume@cs.toronto.edu>
+ * Unauthorized use of this file is strictly prohibited.
+ * 
+ * All rights reserved. No warranty, explicit or implicit, provided.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+ * SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+ * FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 package org.ut.biolab.medsavant.client.view.dashboard;
 
 import com.explodingpixels.macwidgets.MacWidgetFactory;
@@ -50,6 +63,7 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.ut.biolab.medsavant.MedSavantClient;
 import org.ut.biolab.medsavant.client.view.component.StackableJPanelContainer;
 import org.ut.biolab.medsavant.client.view.images.ImagePanel;
+import org.ut.biolab.medsavant.shared.util.WebResources;
 
 /**
  *
@@ -238,8 +252,8 @@ public class Dashboard extends StackableJPanelContainer implements Listener<Dash
             @Override
             public void actionPerformed(ActionEvent ae) {
                 try {
-                    URI uri = URI.create(MedSavantFrame.FEEDBACK_URI);
-                    Desktop.getDesktop().mail(uri);
+//                //    URI uri = URI.create(MedSavantFrame.FEEDBACK_URI);
+                    Desktop.getDesktop().mail(WebResources.FEEDBACK_URL.toURI());
                 } catch (Exception ex) {
                 }
             }
@@ -249,9 +263,8 @@ public class Dashboard extends StackableJPanelContainer implements Listener<Dash
         JComponent userguide = ViewUtil.createHyperlinkButton("User Guide", ViewUtil.getMedSavantBlueColor(), new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                try {
-                    URI uri = URI.create(MedSavantFrame.USERGUIDE_URI);
-                    Desktop.getDesktop().browse(uri);
+                try {                    
+                    Desktop.getDesktop().browse(WebResources.USERGUIDE_URL.toURI());
                 } catch (Exception ex) {
                 }
             }

@@ -7,7 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ut.biolab.medsavant.client.api.Listener;
 import org.ut.biolab.medsavant.client.settings.DirectorySettings;
-import org.ut.biolab.medsavant.client.view.splash.MedSavantServerInfo;
+import org.ut.biolab.medsavant.client.view.login.MedSavantServerInfo;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -107,6 +107,10 @@ public class ServerController {
     }
     
     public synchronized void saveServers() {
+        saveServers(true);
+    }
+    
+    public synchronized void saveServers(boolean notifyListeners) {
 
         //LOG.info("Serializing " + servers.size() + " servers");
         FileOutputStream fileout = null;
@@ -148,7 +152,9 @@ public class ServerController {
             }
         }
 
-        notifyListeners();
+        if (notifyListeners) {
+            notifyListeners();
+        }
     }
 
     private synchronized void loadServers() {

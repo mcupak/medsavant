@@ -214,6 +214,15 @@ public class Variant {
 	
 	
 	/**
+	 * Get the zygosity of this variant.
+	 * @return the zygosity String
+	 */
+	public String getZygosity() {
+		return zygosity;
+	}
+	
+	
+	/**
 	 * Get value for a specific column.
 	 * @param columnName the String name of this column (in the header)
 	 * @return the value corresponding to this column
@@ -336,7 +345,7 @@ public class Variant {
 			int totalCount= Integer.parseInt(dpText);
 			String[] aoCoverageDelimited= aoText.split(",");
 			
-			////////////// FIX WHEN DB IS UPDATED TO NEW FORMAT - deals with multiple alleles/vcf line
+			// UPDATE WHEN DB IS UPDATED TO NEW FORMAT - deals with multiple alleles/vcf line
 			System.err.println("Fix covereage BUG here: " + this.getClass().getSimpleName());
 			/* Sometimes the AO count can be comma separated for multiple alternate
 			 * alleles. In this case, due to the way we import these in MedSavant,

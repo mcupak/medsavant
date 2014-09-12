@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.ut.biolab.medsavant.MedSavantClient;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
 import org.ut.biolab.medsavant.shared.model.ProgressStatus;
 import org.ut.biolab.medsavant.shared.model.VariantTag;
 import org.ut.biolab.medsavant.client.project.ProjectController;
@@ -66,6 +66,7 @@ public class ImportVariantsWizardWithAnnotation extends WizardDialog {
     private static final String NOTIFICATION_TITLE = "Importing Variants";
 
     private boolean useJannovar = true;
+    private boolean doPhasing = true;
 
     public ImportVariantsWizardWithAnnotation() {
         setTitle("Import Variants Wizard");
@@ -243,6 +244,30 @@ public class ImportVariantsWizardWithAnnotation extends WizardDialog {
             page.addText("Annotation only available for hg19");
         }
 
+         /* Add VCF annotation support via Jannovar. */
+        final JCheckBox PhasingBox = new JCheckBox("Perform phasing");
+        PhasingBox.setSelected(false);
+        PhasingBox.setOpaque(false);
+        PhasingBox.addActionListener(
+                new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        doPhasing = PhasingBox.isSelected();
+                        if(doPhasing){ //must use Jannovar if phasing.
+                            JannovarBox.setSelected(true);
+                        }
+                    }
+                }
+        );
+
+        page.addComponent(PhasingBox);
+        if (!ReferenceController.getInstance().getCurrentReferenceName().equals("hg19")) {
+            PhasingBox.setSelected(false);
+            PhasingBox.setEnabled(false);
+            page.addText("Phasing only available for hg19");
+        }
+        
+        
         final JCheckBox homoRefBox = new JCheckBox("Include variants matching the reference (discouraged)");
         homoRefBox.setOpaque(false);
         homoRefBox.addActionListener(new ActionListener() {
@@ -485,12 +510,12 @@ public class ImportVariantsWizardWithAnnotation extends WizardDialog {
                                     setStatusMessage("Importing variants");
                                     inUploading = false;
                                     setIndeterminate(true);
-                                    manager.uploadVariants(LoginController.getSessionID(), transferIDs, ProjectController.getInstance().getCurrentProjectID(), ReferenceController.getInstance().getCurrentReferenceID(), tagsToStringArray(variantTags), includeHomoRef, email, autoPublish.isSelected(), useJannovar);
+                                    manager.uploadVariants(LoginController.getSessionID(), transferIDs, ProjectController.getInstance().getCurrentProjectID(), ReferenceController.getInstance().getCurrentReferenceID(), tagsToStringArray(variantTags), includeHomoRef, email, autoPublish.isSelected(), useJannovar, doPhasing);
                                     LOG.info("Import complete");
                                 } else {
                                     LOG.info("Importing variants stored on server");
                                     setStatusMessage("Importing variants");
-                                    manager.uploadVariants(LoginController.getSessionID(), new File(serverPathField.getText()), ProjectController.getInstance().getCurrentProjectID(), ReferenceController.getInstance().getCurrentReferenceID(), tagsToStringArray(variantTags), includeHomoRef, email, autoPublish.isSelected(), useJannovar);
+                                    manager.uploadVariants(LoginController.getSessionID(), new File(serverPathField.getText()), ProjectController.getInstance().getCurrentProjectID(), ReferenceController.getInstance().getCurrentReferenceID(), tagsToStringArray(variantTags), includeHomoRef, email, autoPublish.isSelected(), useJannovar, doPhasing);
                                     LOG.info("Done importing");
                                 }
                                 return null;

@@ -11,6 +11,8 @@ import edu.toronto.cs.medsavant.medsavant.app.api.appcomm.PatientVariantAnalyzeC
 import java.awt.Component;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import org.apache.commons.lang3.ArrayUtils;
@@ -97,8 +99,9 @@ public class VariantNavigatorApp extends MultiSectionApp implements AppCommHandl
     @Override
     public void handleCommEvent(PatientVariantAnalyzeComm value) {
         Integer patientID = value.getEventData();
-        QueryUtils.addQueryOnPatients(new int[]{patientID});
         MedSavantFrame.getInstance().getDashboard().launchApp(this);
+        QueryUtils.addQueryOnPatients(new int[]{patientID});
+        MedSavantFrame.getInstance().repaint();
     }
 
 }

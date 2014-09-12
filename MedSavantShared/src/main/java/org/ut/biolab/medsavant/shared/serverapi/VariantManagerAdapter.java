@@ -43,7 +43,9 @@ import org.ut.biolab.medsavant.shared.model.SimpleVariantFile;
 import org.ut.biolab.medsavant.shared.model.VariantComment;
 import org.ut.biolab.medsavant.shared.util.Modifier;
 import static org.ut.biolab.medsavant.shared.util.ModificationType.*;
-import org.ut.biolab.medsavant.shared.appdevapi.VariantIterator;
+import org.ut.biolab.medsavant.shared.model.UserComment;
+import org.ut.biolab.medsavant.shared.model.UserCommentGroup;
+import org.ut.biolab.medsavant.shared.vcf.VariantRecord;
 
 
 /**
@@ -58,11 +60,11 @@ public interface VariantManagerAdapter extends Remote {
     ProgressStatus checkProgress(String sessID, boolean userCancelled) throws RemoteException, SessionExpiredException;
 
     //These methods modify the database, but nothing happens until publishVariants is called, at which point MedSavant exits anyway.
-    public int uploadVariants(String sessID, int[] fileIDs, int projID, int refID, String[][] variantTags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar) throws RemoteException, IOException, LockException, Exception;
-    public int uploadVariants(String sessID, File dirContainingVCFs, int projID, int refID, String[][] tags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar) throws RemoteException, IOException, LockException, Exception;
+    public int uploadVariants(String sessID, int[] fileIDs, int projID, int refID, String[][] variantTags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar, boolean doPhasing) throws RemoteException, IOException, LockException, Exception;
+    public int uploadVariants(String sessID, File dirContainingVCFs, int projID, int refID, String[][] tags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar, boolean doPhasing) throws RemoteException, IOException, LockException, Exception;
     
     //Synonym for uplaodVariants -- for compatibility with JSON client.
-    public int uploadTransferredVariants(String sessID, int[] fileIDs, int projID, int refID, String[][] variantTags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar) throws RemoteException, IOException, LockException, Exception;
+    public int uploadTransferredVariants(String sessID, int[] fileIDs, int projID, int refID, String[][] variantTags, boolean includeHomoRef, String email, boolean autoPublish, boolean preAnnotateWithAnnovar, boolean doPhasing) throws RemoteException, IOException, LockException, Exception;
     public void publishVariants(String sessID, int projID, int referenceID, int updateID) throws LockException, Exception;
     public void publishVariants(String sessID, int projID) throws LockException, Exception;
     public void cancelPublish(String sessID, int projID, int referenceID, int updateID) throws LockException, Exception;
@@ -115,5 +117,12 @@ public interface VariantManagerAdapter extends Remote {
     public Map<SimplePatient, Integer> getPatientHeatMap(String sessID, int projID, int refID, Condition[][] conditions, Collection<SimplePatient> patients) throws SQLException, RemoteException, SessionExpiredException;
     public Map<String, Integer> getDNAIDHeatMap(String sessID, int projID, int refID, Condition[][] conditions, Collection<String> dnaIDs) throws SQLException, RemoteException, SessionExpiredException;
     public boolean willApproximateCountsForConditions(String sessID, int projID, int refID, Condition[][] conditions) throws SQLException, RemoteException, SessionExpiredException;
+    
+    @Modifier(type = LOCUS_COMMENT)
+    public int replyToUserCommentGroup(String sessID, int locusCommentGroupId, UserComment locusComment) throws SessionExpiredException, SQLException, RemoteException, SecurityException;
+    public UserCommentGroup getUserCommentGroup(String sessID, int projectId, int refId, String chrom, long start_position, long end_position, String ref, String alt) throws RemoteException, SessionExpiredException, SQLException, SecurityException;    
+    public UserCommentGroup getUserCommentGroup(String sessID, int projectId, int refId, VariantRecord vr) throws RemoteException, SessionExpiredException, SQLException, SecurityException;
+    public UserCommentGroup createUserCommentGroup(String sessID, int projectId, int refId, String chrom, long start_position, long end_position, String ref, String alt) throws RemoteException, SQLException, SessionExpiredException, IllegalArgumentException;
+    public UserCommentGroup createUserCommentGroup(String sessID, int projectId, int refId, VariantRecord vr) throws RemoteException, SQLException, SessionExpiredException, IllegalArgumentException;
 }
 

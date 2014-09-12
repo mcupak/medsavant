@@ -1,11 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Copyright (c) 2014 Marc Fiume <mfiume@cs.toronto.edu>
+ * Unauthorized use of this file is strictly prohibited.
+ * 
+ * All rights reserved. No warranty, explicit or implicit, provided.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+ * SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+ * FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 package org.ut.biolab.medsavant.client.view.app;
 
-import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -14,49 +21,48 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
+import java.util.concurrent.*;
+import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdesktop.swingx.JXCollapsiblePane;
 import org.ut.biolab.medsavant.MedSavantClient;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.api.Listener;
 import org.ut.biolab.medsavant.client.project.ProjectController;
 import org.ut.biolab.medsavant.client.reference.ReferenceController;
 import org.ut.biolab.medsavant.client.util.ClientNetworkUtils;
+import org.ut.biolab.medsavant.client.util.DownloadEvent;
 import org.ut.biolab.medsavant.client.view.MedSavantFrame;
-import org.ut.biolab.medsavant.client.view.notify.Notification;
 import org.ut.biolab.medsavant.client.view.app.builtin.task.BackgroundTaskWorker;
 import org.ut.biolab.medsavant.client.view.component.PlaceHolderTextField;
 import org.ut.biolab.medsavant.client.view.component.RoundedPanel;
+import org.ut.biolab.medsavant.client.view.component.WaitPanel;
 import org.ut.biolab.medsavant.client.view.dashboard.LaunchableApp;
 import org.ut.biolab.medsavant.client.view.images.IconFactory;
 import org.ut.biolab.medsavant.client.view.images.ImagePanel;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
+import org.ut.biolab.medsavant.client.view.notify.Notification;
 import org.ut.biolab.medsavant.client.view.util.DialogUtils;
 import org.ut.biolab.medsavant.client.view.util.StandardAppContainer;
 import org.ut.biolab.medsavant.client.view.util.ViewUtil;
+import org.ut.biolab.medsavant.shared.serverapi.SettingsManagerAdapter;
 import org.ut.biolab.medsavant.shared.serverapi.VariantManagerAdapter;
 import org.ut.biolab.medsavant.shared.util.ExtensionsFileFilter;
 import org.ut.biolab.medsavant.shared.util.IOUtils;
 
 /**
  *
- * @author mfiume
+ * @author mfiume, rammar
  */
 public class VCFUploadApp implements LaunchableApp {
 
     private static final Log LOG = LogFactory.getLog(VCFUploadApp.class);
     private static VariantManagerAdapter variantManager = MedSavantClient.VariantManager;
+    private static SettingsManagerAdapter settingsManager = MedSavantClient.SettingsManager;
+
+    private ExecutorService executor;
 
     List<File> filesToImport;
     private JPanel fileListView;
@@ -81,15 +87,18 @@ public class VCFUploadApp implements LaunchableApp {
     private JPanel advancedOptionsPanel;
     private JButton importButton;
     private JXCollapsiblePane dragDropContainer;
-    private CardLayout cardLayout;
+    private CardLayout cardLayout = new CardLayout();
     private JCheckBox annovarCheckbox;
+    private JCheckBox phasingCheckbox;
     private PlaceHolderTextField emailPlaceholder;
+	private JCheckBox includeReferenceCheckbox;
 
     public VCFUploadApp() {
         filesToImport = new ArrayList<File>();
     }
 
     private JPanel view;
+    private JPanel innerView = new JPanel(cardLayout);
 
     @Override
     public JPanel getView() {
@@ -97,16 +106,38 @@ public class VCFUploadApp implements LaunchableApp {
     }
 
     private void initView() {
+        // Restart any running threads.
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+        executor = Executors.newCachedThreadPool();
+
         if (view == null) {
-
-            JPanel settingsCard = getSettingsPanel();
-
-            JPanel fixedWidth = ViewUtil.getDefaultFixedWidthPanel(settingsCard);
+            innerView.add(getSettingsPanel(), "upload");
+            innerView.add(getLockedDBNotice(), "lock");
+            JPanel fixedWidth = ViewUtil.getDefaultFixedWidthPanel(innerView);
             view = new StandardAppContainer(fixedWidth, true);
             view.setBackground(ViewUtil.getLightGrayBackgroundColor());
-
-            refreshFileList();
         }
+
+
+        if (getDBLockState()) {
+            cardLayout.show(innerView, "lock");
+            refreshWhenLockIs(false);
+            MedSavantFrame.getInstance().repaint(); // window won't update until resize otherwise
+        } else {
+            cardLayout.show(innerView, "upload");
+            refreshWhenLockIs(true);
+            MedSavantFrame.getInstance().repaint(); // window won't update until resize otherwise
+
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    refreshFileList();
+                }
+            });
+        }
+
     }
 
     private void initSettingsPanel() {
@@ -122,9 +153,17 @@ public class VCFUploadApp implements LaunchableApp {
 
         advancedOptionsPanel.add(ViewUtil.getSettingsHeaderLabel("Annotation"), "wrap");
         advancedOptionsPanel.add(annovarCheckbox = new JCheckBox("perform gene-based variant annotation"), "wrap");
+        advancedOptionsPanel.add(phasingCheckbox = new JCheckBox("perform phasing"), "wrap");
         annovarCheckbox.setSelected(true);
         annovarCheckbox.setFocusable(false);
+        phasingCheckbox.setSelected(false);
+        phasingCheckbox.setFocusable(false);
 
+		includeReferenceCheckbox= new JCheckBox("include all VCF lines, including reference calls (highly recommended for pharmacogenetic testing)");
+		includeReferenceCheckbox.setSelected(true);
+		includeReferenceCheckbox.setFocusable(false);
+		advancedOptionsPanel.add(includeReferenceCheckbox, "wrap");
+		
         advancedOptionsPanel.add(ViewUtil.getSettingsHeaderLabel("Notifications"), "wrap");
 
         emailPlaceholder = new PlaceHolderTextField();
@@ -158,6 +197,7 @@ public class VCFUploadApp implements LaunchableApp {
 
     @Override
     public void viewWillUnload() {
+        executor.shutdownNow();
     }
 
     @Override
@@ -401,9 +441,17 @@ public class VCFUploadApp implements LaunchableApp {
 
                         for (File file : copyOfFilesToImport) {
                             LOG.info("Created input stream for file");
-                            this.addLog("Uploading " + file.getName() + "...");
-                            transferIDs[fileIndex++] = ClientNetworkUtils.copyFileToServer(file);
-                            this.setTaskProgress(((double) fileIndex) / numFiles);
+                            this.addLog(String.format("Uploading (%d/%d) %s...", fileIndex + 1, numFiles, file.getName()));
+                            transferIDs[fileIndex++] = ClientNetworkUtils.copyFileToServer(file, new Listener<DownloadEvent>() {
+
+                                @Override
+                                public void handleEvent(DownloadEvent event) {
+                                    switch (event.getType()) {
+                                        case PROGRESS:
+                                            instance.setTaskProgress(event.getProgress());
+                                    }
+                                }
+                            }).get();
 
                         }
                         this.addLog("Done uploading variants");
@@ -411,6 +459,7 @@ public class VCFUploadApp implements LaunchableApp {
                         this.addLog("Queuing background import job...");
 
                         this.addLog("Annotating with Jannovar: " + annovarCheckbox.isSelected());
+                        this.addLog("Phasing: " + phasingCheckbox.isSelected());
                         this.addLog("Emailing notifications to: " + emailPlaceholder.getText());
 
                         Thread t = new Thread(new Runnable() {
@@ -436,7 +485,13 @@ public class VCFUploadApp implements LaunchableApp {
                                                 transferIDs,
                                                 ProjectController.getInstance().getCurrentProjectID(),
                                                 ReferenceController.getInstance().getCurrentReferenceID(),
-                                                new String[][]{}, false, emailPlaceholder.getText(), true, annovarCheckbox.isSelected());
+                                                new String[][]{},
+                                                includeReferenceCheckbox.isSelected(),
+                                                emailPlaceholder.getText(),
+                                                true,
+                                                annovarCheckbox.isSelected(),
+                                                phasingCheckbox.isSelected());
+												
                                         succeeded();
                                     } 
                                 } catch (Exception ex) {
@@ -449,7 +504,7 @@ public class VCFUploadApp implements LaunchableApp {
                             }
 
                             private void succeeded() {
-                                LOG.info("Uplaod succeeded");
+                                LOG.info("Upload succeeded");
 
                                 SwingUtilities.invokeLater(new Runnable() {
 
@@ -491,6 +546,63 @@ public class VCFUploadApp implements LaunchableApp {
         });
 
         return container;
+    }
+
+    /**
+     * Return a panel with a notice about the current DB being locked.
+     * @return a panel with a notice about the current DB being locked.
+     */
+    private JPanel getLockedDBNotice() {
+        JPanel container = new WaitPanel(String.format("An update is currently in progress. "
+                + "Further updates must wait until the current update is complete."));
+
+        container.setBackground(ViewUtil.getLightGrayBackgroundColor());
+
+        return container;
+    }
+
+    /**
+     * Wait for the current DB lock to reach a certain state, then refresh the view.
+     * @param lockState true if the lock is held, false if not.
+     * @return A Future that will complete when the lockState is achieved
+     */
+    private Future refreshWhenLockIs(final boolean lockState) {
+        return executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean lock = !lockState;
+
+                while (lock != lockState) {
+                    lock = getDBLockState();
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
+
+                // Refresh View
+                initView();
+            }
+        });
+    }
+
+    /**
+     * Return whether or not the current DB is locked for modifications.
+     * @return The Lock state of the current DB.
+     */
+    private boolean getDBLockState() {
+        boolean dbLocked = true;
+
+        try {
+            String sessionID = LoginController.getSessionID();
+            int projectID = ProjectController.getInstance().getCurrentProjectID();
+            dbLocked = settingsManager.isProjectLockedForChanges(sessionID, projectID);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return dbLocked;
     }
 
     /**

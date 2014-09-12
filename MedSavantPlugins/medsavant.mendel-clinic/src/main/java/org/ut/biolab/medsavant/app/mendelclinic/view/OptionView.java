@@ -1,3 +1,16 @@
+/**
+ * Copyright (c) 2014 Marc Fiume <mfiume@cs.toronto.edu>
+ * Unauthorized use of this file is strictly prohibited.
+ * 
+ * All rights reserved. No warranty, explicit or implicit, provided.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+ * SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+ * FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 package org.ut.biolab.medsavant.app.mendelclinic.view;
 
 import org.ut.biolab.medsavant.client.view.dialog.IndividualSelector;
@@ -47,7 +60,7 @@ import org.ut.biolab.medsavant.app.mendelclinic.MendelClinicApp;
 import org.ut.biolab.medsavant.client.api.Listener;
 import org.ut.biolab.medsavant.client.filter.FilterController;
 import org.ut.biolab.medsavant.client.filter.FilterEvent;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
 import org.ut.biolab.medsavant.shared.model.Cohort;
 import org.ut.biolab.medsavant.client.project.ProjectController;
 import org.ut.biolab.medsavant.client.reference.ReferenceController;
@@ -912,11 +925,11 @@ public class OptionView {
         JButton runButton = new JButton("Run");
 
         runButton.addActionListener(new ActionListener() {
-
-            Notification notification = new Notification();
-
+            
             @Override
             public void actionPerformed(ActionEvent ae) {
+                
+                final Notification notification = new Notification();
 
                 new BackgroundTaskWorker<Boolean>("Mendel") {
 
@@ -1160,7 +1173,7 @@ public class OptionView {
                         filtersChangedSinceLastDump = false;
 
                         // line in format: "8243_0000","chr17","6115", "6115", "G","C","SNP","Hetero"
-                        int[] columnsToKeep = new int[]{3, 4, 5, 6, 8, 9, 12, 13};
+                        int[] columnsToKeep = new int[]{3, 4, 5, 6, 8, 9, 13, 14};
                         n.setDescription("Stripping file");
                         m.addLog("Stripping file");
 

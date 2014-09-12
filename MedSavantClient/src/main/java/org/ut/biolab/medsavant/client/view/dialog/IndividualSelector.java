@@ -45,7 +45,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ut.biolab.medsavant.MedSavantClient;
 import org.ut.biolab.medsavant.client.api.Listener;
-import org.ut.biolab.medsavant.client.login.LoginController;
+import org.ut.biolab.medsavant.client.view.login.LoginController;
 import org.ut.biolab.medsavant.client.project.ProjectController;
 import org.ut.biolab.medsavant.client.util.CacheController;
 import org.ut.biolab.medsavant.client.util.ClientMiscUtils;
@@ -298,11 +298,11 @@ public class IndividualSelector extends JDialog implements BasicPatientColumns {
                         selectedRows.clear();
                         selectedHospitalIDs.clear();
 
-                        selectedRows.add(rows[0]);
-                        int realRow = individualsSTP.getActualRowAt(rows[0]);
+                        int realRow = individualsSTP.getActualRowAt(rows[0]);						
+						selectedRows.add(realRow);
                         Object[] o = individualsRetriever.getIndividuals().get(realRow);
                         selectedHospitalIDs.add(o[INDEX_OF_HOSPITAL_ID].toString());
-
+						
                         instance.setVisible(false);
                         setIndividualsChosen(true);
 

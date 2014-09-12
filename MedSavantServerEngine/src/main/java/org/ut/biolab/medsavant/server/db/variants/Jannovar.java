@@ -11,14 +11,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ut.biolab.medsavant.server.serverapi.VariantManager;
 import org.ut.biolab.medsavant.shared.util.DirectorySettings;
-import org.ut.biolab.medsavant.shared.util.IOUtils;
-import org.ut.biolab.medsavant.shared.util.NetworkUtils;
+import org.ut.biolab.medsavant.shared.util.WebResources;
 
 /**
  *
@@ -32,10 +28,8 @@ public class Jannovar {
     // TODO: have the map be compiled from an xml file hosted online, to support changes after deployment
     {
         referenceToRefSeqSerURL = new HashMap<String, URL>();
-        try {
-            referenceToRefSeqSerURL.put("hg19", new URL("http://genomesavant.com/p/medsavant/serve/annotation/jannovar/refseq_hg19.ser"));
-        } catch (MalformedURLException ex) {
-        }
+        referenceToRefSeqSerURL.put("hg19", WebResources.JANNOVAR_HG19_SERFILE_URL);
+
     }
 
     private static Map<String, URL> referenceToRefSeqSerURL;
@@ -92,7 +86,7 @@ public class Jannovar {
     /**
      * Initialize Jannovar
      */
-    private boolean initialize() throws IOException {
+    private boolean initialize() throws IOException, JannovarException {
 
         // download the serizalized files, if needed
         if (!hasSerializedFile()) {
@@ -101,16 +95,20 @@ public class Jannovar {
             // use the reference to url map when Jannovar links break
             // TODO: have the map be compiled from an xml file hosted online, to support changes after deployment
             /*
-			if (referenceToRefSeqSerURL.containsKey(reference)) {
-                LOG.info("Downloading serialized file from genomesavant.com");
-                NetworkUtils.downloadFile(referenceToRefSeqSerURL.get(reference), getJannovarDataDirectory(), "refseq_" + reference + ".ser");
-            } else {
-			*/
-                LOG.info("Compiling serialized file with Jannovar");
-                jannovar.Jannovar.main(new String[]{"--create-refseq", "-d", getJannovarDataDirectory().getAbsolutePath()});
+             if (referenceToRefSeqSerURL.containsKey(reference)) {
+             LOG.info("Downloading serialized file from genomesavant.com");
+             NetworkUtils.downloadFile(referenceToRefSeqSerURL.get(reference), getJannovarDataDirectory(), "refseq_" + reference + ".ser");
+             } else {
+             */
+            LOG.info("Compiling serialized file with Jannovar");
+            jannovar.Jannovar.main(new String[]{
+                    "--create-refseq",
+                    "-d", getJannovarDataDirectory().getAbsolutePath(),
+                    "-g", this.reference
+            });
             /*
-			}
-			*/ 
+             }
+             */
         }
         return true;
     }
@@ -130,7 +128,7 @@ public class Jannovar {
      */
     private File annotateVCFWithJannovar(File sourceVCF, File destDir) throws JannovarException, IOException {
         /* Annotated VCF name as determined by Jannovar. */
-             
+
         String outname = sourceVCF.getName();
 
         int i = outname.lastIndexOf("vcf");
@@ -143,13 +141,13 @@ public class Jannovar {
             outname = outname.substring(0, i) + "jv.vcf";
         }
 
-        File outFile = new File(destDir, outname);        
+        File outFile = new File(destDir, outname);
 
         jannovar.Jannovar.main(new String[]{
             "-D", getRefSeqSerializedFile().getAbsolutePath(),
             "-V", sourceVCF.getAbsolutePath(),
-            "-O", destDir.getAbsolutePath() /*outFile.getAbsolutePath()*/
-			//, "-a" // get all annotations for this variant - currently causing infobright errors.
+            "-g", this.reference,
+            "-O", destDir.getAbsolutePath() /*outFile.getAbsolutePath()*/ //, "-a" // get all annotations for this variant - currently causing infobright errors.
         });
 
         LOG.info("[Jannovar] Wrote annotated VCF file to \"" + sourceVCF.getParent() + "/" + outFile.getAbsolutePath() + "\"");
